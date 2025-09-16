@@ -6,7 +6,10 @@
   - [Frontend (React)](#frontend-react)
   - [Infra(Docker/docker-compose)](#infradockerdocker-compose)
   - [Tarefas](#tarefas)
+    - [Tarefas Frontend](#tarefas-frontend)
+    - [Tarefas API](#tarefas-api)
   - [Histórias do Usuário](#histórias-do-usuário)
+  - [Stack](#stack)
 <!--toc:end-->
 
 ## API (FastAPI)
@@ -43,10 +46,10 @@
 
 ## Tarefas
 
-- [ ] Criar repositório (Monolito)
-- [ ] Definir banco de dados
+- [x] Criar repositório (Monolito)
+- [x] Definir banco de dados
   - [ ] Criar Dockerfile para ele
-- [ ] Criar projeto FastAPI
+- [x] Criar projeto FastAPI
 - [ ] Criar projeto React
 - [ ] Definir Infra
 - [ ] Estrutura de testes
@@ -74,6 +77,7 @@
   - [ ] Editar de notificação
   - [ ] Remover notificação
 - [ ] Criar rota de edição de dispostivos
+- [x] Configurar logger
 
 ## Histórias do Usuário
 
@@ -91,3 +95,8 @@ de acordo com minhas notificações configuradas
 - [ ] Como usuário quero registrar novos dispostivos
 - [ ] Como usuário quero editar meus dispostivos
 - [ ] Como usuário quero remover dispostivos
+
+## Stack
+
+- React + better-auth
+- FastAPI + MongoDB + Redis Streams
