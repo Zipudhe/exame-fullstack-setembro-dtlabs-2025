@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from schemas import Device
+from .schemas import Device
 from src.schemas import CommonsDep
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -8,7 +8,7 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 
 @router.get("/", response_model=list[Device])
 async def get_devices():
-    return {"data": []}
+    return []
 
 
 @router.get("/{device_id}", response_model=Device)

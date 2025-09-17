@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from schemas import UserIn, UserOut
+from .schemas import UserIn, UserOut
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 
