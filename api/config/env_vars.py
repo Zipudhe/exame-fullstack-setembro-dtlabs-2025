@@ -20,3 +20,14 @@ def get_allowed_hosts():
         return list("*")
 
     return white_list_string.split(",")
+
+
+def get_database_credentials() -> tuple[str, str]:
+    username = os.getenv("MONGODB_INITDB_ROOT_USERNAME", "admin")
+    password = os.getenv("MONGODB_INITDB_ROOT_PASSWORD", "123")
+
+    return (username, password)
+
+
+def get_database_host() -> str:
+    return os.getenv("MONGODB_HOST", "localhost")
