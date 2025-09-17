@@ -4,9 +4,11 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-
-from config.env_vars import get_allowed_hosts, get_port, get_enviroment
+from config.env_vars import get_allowed_hosts
 from config.logging import setup_logger
+
+from src.devices.router import router as devicesRouter
+from src.users.router import router as usersRouter
 
 setup_logger()
 
@@ -23,6 +25,9 @@ app = FastAPI(
 
 CORSMiddleware(app, allow_origins=allowed_hosts)
 
+app.include_router(usersRouter, prefix="/api", tags=["Users"])
+app.include_router(devicesRouter, prefix="/api", tags=["Users"])
+
 
 @app.get("/")
 def default():
@@ -30,13 +35,10 @@ def default():
 
 
 if __name__ == "__main__":
+    from config.env_vars import get_port, get_enviroment
+
     port = get_port()
     env = get_enviroment()
-
-    logging.basicConfig(
-        level=logging.DEBUG if env == "development" else logging.INFO,
-        filename="api.log",
-    )
 
     uvicorn.run(
         "main:app",
