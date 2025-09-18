@@ -2,7 +2,7 @@ import logging
 from uuid import uuid4
 from fastapi import APIRouter, Response, status, HTTPException
 
-from src.schemas import DatabaseDep
+from .dependencies import UserCollectionDep, SessionCollectionDep
 
 from .schemas import UserCreated, UserOut, UserInputForm, UserLoginForm
 from .utils import Hasher
@@ -12,15 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=UserCreated, status_code=status.HTTP_201_CREATED)
-def create_user(user: UserInputForm, db: DatabaseDep):
-    users_collection = db.get_collection("users")
-
+def create_user(user: UserInputForm, collection: UserCollectionDep):
     newUser = user.model_dump()
     hashed_password = Hasher.get_password_hash(user.password)
     newUser["password"] = hashed_password
 
     try:
-        users_collection.insert_one(newUser)
+        collection.insert_one(newUser)
     except Exception as e:
         logger.info(f"Failed to insert new user: {e}")
         raise HTTPException(status_code=400, detail="Unable to create user")
@@ -29,11 +27,10 @@ def create_user(user: UserInputForm, db: DatabaseDep):
 
 
 @router.get("/{user_id}", response_model=UserOut)
-def get_user(user_id: str, db: DatabaseDep):
-    users_collection = db.get_collection("users")
+def get_user(user_id: str, collection: UserCollectionDep):
     try:
         logger.info(f"Fetching user with id: {user_id}")
-        user = users_collection.find_one({"id": user_id})
+        user = collection.find_one({"id": user_id})
     except Exception as e:
         logger.info(f"Failed to insert new user: {e}")
         raise HTTPException(status_code=400, detail="Unable to create user")
@@ -44,12 +41,10 @@ def get_user(user_id: str, db: DatabaseDep):
 @router.post("/login", status_code=status.HTTP_200_OK)
 def create_session(
     user_data: UserLoginForm,
-    db: DatabaseDep,
+    users_collection: UserCollectionDep,
+    session_collection: SessionCollectionDep,
     response: Response,
 ):
-    users_collection = db.get_collection("users")
-    session_collection = db.get_collection("sessions")
-
     try:
         user = users_collection.find_one({"username": user_data.username})
 
