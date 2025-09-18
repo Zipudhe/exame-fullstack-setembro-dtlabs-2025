@@ -1,17 +1,31 @@
-from datetime import date, time
-from pydantic import BaseModel
-from typing import Optional
+from uuid import uuid4
+
+from datetime import datetime, date
+from fastapi import Form
+from pydantic import BaseModel, Field
+from typing import Annotated, Optional
 
 
 class Device(BaseModel):
+    uuid: str = Field(default_factory=lambda: uuid4().hex)
+    name: str
+    location: str
+    sn: str = Field(pattern="^\\d{12}$", min_length=12, max_length=12)
+    description: str
+    user_id: str
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+class DeviceOut(BaseModel):
     uuid: str
     name: str
     location: str
     sn: str
     description: str
     user_id: str
-    created_at: time
-    updated_at: time
+    created_at: str
+    updated_at: str
 
 
 class HearBeat(BaseModel):
@@ -26,3 +40,10 @@ class DeviceStatus(HearBeat):
     device_id: str
     conectivity: bool
     boot_date: date
+
+
+class DeviceCreated(BaseModel):
+    uuid: str
+
+
+DeviceForm = Annotated[Device, Form()]
