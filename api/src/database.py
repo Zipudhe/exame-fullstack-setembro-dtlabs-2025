@@ -1,15 +1,17 @@
 import logging
 from pymongo import MongoClient
+from pymongo.database import Database
 from config.env_vars import get_database_host, get_database_credentials
 
 logger = logging.getLogger(__name__)
 
 
-def get_client() -> MongoClient:
+def get_db_client() -> MongoClient:
     (username, password) = get_database_credentials()
     host = get_database_host()
     connectionString = f"mongodb://{username}:{password}@{host}:27017"
-    logger.info(f"mongo connectionString: {connectionString}")
+    logger.debug(f"connectionString: {connectionString}")
+
     try:
         client = MongoClient(connectionString)
         return client
@@ -18,7 +20,12 @@ def get_client() -> MongoClient:
         raise Exception("Unable to connect to mongodb client")
 
 
+def get_database() -> Database:
+    client = get_db_client()
+    return Database(client, "iotDevices")
+
+
 def check_client_connection():
-    client = get_client()
+    client = get_db_client()
     logger.debug(f"client: {client}")
     return client.admin.command("ping")
