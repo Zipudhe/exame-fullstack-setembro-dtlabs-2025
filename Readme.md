@@ -48,11 +48,11 @@
 
 - [x] Criar repositório (Monolito)
 - [x] Definir banco de dados
-  - [ ] Criar Dockerfile para ele
+  - [x] Criar Dockerfile para ele
 - [x] Criar projeto FastAPI
 - [ ] Criar projeto React
 - [ ] Definir Infra
-- [ ] Estrutura de testes
+- [x] Estrutura de testes
 
 ### Tarefas Frontend
 
@@ -67,7 +67,7 @@
 ### Tarefas API
 
 - [ ] Usuario configurável padrão para testes
-- [ ] Criar rota de login de usuário
+- [x] Criar rota de login de usuário
 - [ ] Criar rotas dispostivos
   - [ ] listagem completa com filtros (paginacão)
   - [ ] listagem resumida (CPU, RAM e Temp) (paginacão)
@@ -81,7 +81,7 @@
 
 ## Histórias do Usuário
 
-- [ ] Criar rota de login para usuarios
+- [x] Criar rota de login para usuarios
 - [ ] Como usuario quero poder ter acesso a uma listagem dos meus
   dispostivos
 - [ ] Como usuario quero um resume dos status de CPU, RAM e temperatura dos dispostivos
