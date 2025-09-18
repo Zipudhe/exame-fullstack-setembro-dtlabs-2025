@@ -1,7 +1,9 @@
 import logging
+
+from redis import Redis
 from pymongo import MongoClient
 from pymongo.database import Database
-from config.env_vars import get_database_host, get_database_credentials
+from config.env_vars import get_database_host, get_database_credentials, get_redis_host
 
 logger = logging.getLogger(__name__)
 
@@ -29,3 +31,8 @@ def check_client_connection():
     client = get_db_client()
     logger.debug(f"client: {client}")
     return client.admin.command("ping")
+
+
+def get_redis_storage():
+    host = get_redis_host()
+    return Redis(host=host, port=6379, db=0, decode_responses=True)
