@@ -31,3 +31,7 @@ def get_database_credentials() -> tuple[str, str]:
 
 def get_database_host() -> str:
     return os.getenv("MONGODB_HOST", "localhost")
+
+
+def get_redis_host() -> str:
+    return os.getenv("REDIS_HOST", "localhost")
