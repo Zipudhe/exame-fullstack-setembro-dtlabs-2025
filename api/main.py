@@ -3,8 +3,9 @@ import uvicorn
 import logging
 
 from fastapi import FastAPI
-from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from src.middlewares.auth import AuthMiddleware
+from src.middlewares.users import UserIdAppend
 
 from config.env_vars import get_allowed_hosts
 from config.logging import setup_logger
@@ -22,7 +23,7 @@ allowed_hosts = get_allowed_hosts()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):
     logger.info("application custom startup")
     check_client_connection()
     yield
@@ -36,6 +37,8 @@ app = FastAPI(
 )
 
 CORSMiddleware(app, allow_origins=allowed_hosts)
+app.add_middleware(AuthMiddleware)
+app.add_middleware(UserIdAppend)
 
 app.include_router(usersRouter, prefix="/api", tags=["Users"])
 app.include_router(devicesRouter, prefix="/api", tags=["Devices"])
