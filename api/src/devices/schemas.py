@@ -12,7 +12,7 @@ class Device(BaseModel):
     location: str
     sn: str = Field(pattern="^\\d{12}$", min_length=12, max_length=12)
     description: str
-    user_id: str
+    user_id: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
@@ -46,4 +46,12 @@ class DeviceCreated(BaseModel):
     uuid: str
 
 
+class DeviceUpdate(BaseModel):
+    name: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
 DeviceForm = Annotated[Device, Form()]
+DeviceUpdateForm = Annotated[DeviceUpdate, Form()]
