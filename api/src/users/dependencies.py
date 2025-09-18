@@ -10,11 +10,4 @@ def get_user_collection(db: DatabaseDep) -> Collection:
     return user_collection
 
 
-def get_session_collection(db: DatabaseDep) -> Collection:
-    session_collection = db.get_collection("sessions")
-
-    return session_collection
-
-
 UserCollectionDep = Annotated[Collection, Depends(get_user_collection)]
-SessionCollectionDep = Annotated[Collection, Depends(get_session_collection)]

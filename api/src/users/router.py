@@ -2,7 +2,8 @@ import logging
 from uuid import uuid4
 from fastapi import APIRouter, Response, status, HTTPException
 
-from .dependencies import UserCollectionDep, SessionCollectionDep
+from .dependencies import UserCollectionDep
+from src.schemas import RedisDep
 
 from .schemas import UserCreated, UserOut, UserInputForm, UserLoginForm
 from .utils import Hasher
@@ -20,7 +21,7 @@ def create_user(user: UserInputForm, collection: UserCollectionDep):
     try:
         collection.insert_one(newUser)
     except Exception as e:
-        logger.info(f"Failed to insert new user: {e}")
+        logger.debug(f"Failed to insert new user: {e}")
         raise HTTPException(status_code=400, detail="Unable to create user")
 
     return user
@@ -29,10 +30,9 @@ def create_user(user: UserInputForm, collection: UserCollectionDep):
 @router.get("/{user_id}", response_model=UserOut)
 def get_user(user_id: str, collection: UserCollectionDep):
     try:
-        logger.info(f"Fetching user with id: {user_id}")
         user = collection.find_one({"id": user_id})
     except Exception as e:
-        logger.info(f"Failed to insert new user: {e}")
+        logger.debug(f"Failed to insert new user: {e}")
         raise HTTPException(status_code=400, detail="Unable to create user")
 
     return user
@@ -42,7 +42,7 @@ def get_user(user_id: str, collection: UserCollectionDep):
 def create_session(
     user_data: UserLoginForm,
     users_collection: UserCollectionDep,
-    session_collection: SessionCollectionDep,
+    redis_client: RedisDep,
     response: Response,
 ):
     try:
@@ -51,19 +51,13 @@ def create_session(
         if not user:
             raise ValueError("Invalid credentials")
 
-        logger.info(f"To be compared: {user_data.password} with {user['password']}")
         password_valid = Hasher.verify_password(user_data.password, user["password"])
-        logger.info(f"Password valid: {password_valid}")
 
         if not password_valid:
             raise ValueError("Invalid credentials")
 
         session_id = uuid4().hex
-
-        session_collection.insert_one(
-            {"user_id": user["_id"], "session_id": session_id}
-        )
-        session_collection.find_one_and_delete({"user_id": user["_id"]})
+        redis_client.setex(f"userSession:{session_id}", 3600, user["id"])
 
         response.set_cookie(
             key="session_id",
@@ -79,7 +73,7 @@ def create_session(
         raise HTTPException(status_code=401, detail=str(e))
 
     except Exception as e:
-        logger.info(f"Failed to create session: {e}")
+        logger.debug(f"Failed to create session: {e}")
         raise HTTPException(status_code=400, detail="Unable to create session")
 
     return
