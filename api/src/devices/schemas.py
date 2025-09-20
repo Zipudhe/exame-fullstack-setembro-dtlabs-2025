@@ -1,8 +1,8 @@
 from uuid import uuid4
 
-from datetime import datetime, date
+from datetime import datetime
 from fastapi import Form
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Annotated, Optional
 
 
@@ -36,10 +36,26 @@ class HearBeat(BaseModel):
     latency: Optional[int] = None
 
 
-class DeviceStatus(HearBeat):
+class DeviceStatusOut(HearBeat):
     device_id: str
     conectivity: bool
-    boot_date: date
+    boot_date: str
+    created_at: str
+
+
+class DeviceStatus(HearBeat):
+    device_sn: str
+    conectivity: bool
+    boot_date: str = Field()
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+    @field_validator("boot_date")
+    def validate_boot_date(cls, value):
+        try:
+            date = datetime.fromisoformat(value).date().isoformat()
+            return date
+        except ValueError as e:
+            raise ValueError("boot_date must be in ISO format (YYYY-MM-DD)") from e
 
 
 class DeviceCreated(BaseModel):
