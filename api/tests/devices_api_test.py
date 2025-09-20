@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 import pytest
 import logging
 
@@ -38,7 +39,14 @@ def database_cleanup():
 def user_cookies(user_credentials):
     response = client.post("/api/users/login", data=user_credentials)
 
-    yield response.cookies
+    session_id = response.cookies.get("session_id")
+    logger.info(f"session_id: {session_id}")
+    if session_id:
+        client.cookies.set("session_id", session_id)
+
+    yield
+
+    client.cookies.clear()
 
 
 @pytest.fixture()
@@ -73,7 +81,7 @@ def created_device(user_cookies):
         "sn": "123456789102",
         "description": "Monitors temperature",
     }
-    response = client.post("/api/devices", data=mocked_device, cookies=user_cookies)
+    response = client.post("/api/devices", data=mocked_device)
 
     assert response.status_code == 201
 
@@ -81,6 +89,8 @@ def created_device(user_cookies):
 
     mocked_device.update({"uuid": created_device_id["uuid"]})
     yield mocked_device
+
+    client.delete(f"/api/devices/{created_device_id['uuid']}")
 
 
 def test_create_device(user_cookies):
@@ -90,7 +100,7 @@ def test_create_device(user_cookies):
         "sn": "123456789102",
         "description": "Monitors temperature",
     }
-    response = client.post("/api/devices", data=mocked_device, cookies=user_cookies)
+    response = client.post("/api/devices", data=mocked_device)
 
     assert response.status_code == 201
 
@@ -118,14 +128,47 @@ def create_multiple_devices(user_cookies):
 
     devices = [mocked_device_1, mocked_device_2, mocked_device_3]
     for device in devices:
-        response = client.post("/api/devices", data=device, cookies=user_cookies)
+        response = client.post("/api/devices", data=device)
         assert response.status_code == 201
 
     yield devices
 
 
+@pytest.fixture()
+def create_multiple_status(created_device):
+    device_sn = created_device["sn"]
+    mocked_status_1 = {
+        "device_sn": device_sn,
+        "conectivity": True,
+        "boot_date": "2023-10-01",
+        "cpu_usage": 45,
+        "ram_usage": 60,
+        "free_disk": 120,
+        "tempeture": 40,
+        "latency": 20,
+    }
+
+    mocked_status_2 = {
+        "device_sn": device_sn,
+        "conectivity": True,
+        "boot_date": "2023-10-01",
+        "cpu_usage": 45,
+        "ram_usage": 60,
+        "free_disk": 120,
+        "tempeture": 36.5,
+        "latency": 20,
+    }
+
+    status = [mocked_status_1, mocked_status_2]
+    for stat in status:
+        response = client.post(f"/api/devices/{device_sn}/status", json=stat)
+        assert response.status_code == 201
+
+    yield created_device
+
+
 def test_list_devices(created_device, user_cookies):
-    response = client.get("/api/devices", cookies=user_cookies)
+    response = client.get("/api/devices")
 
     assert response.status_code == 200
 
@@ -139,7 +182,7 @@ def test_list_devices(created_device, user_cookies):
 
 
 def test_multiple_devices(create_multiple_devices, user_cookies):
-    response = client.get("/api/devices", cookies=user_cookies)
+    response = client.get("/api/devices")
 
     assert response.status_code == 200
 
@@ -210,3 +253,57 @@ def test_update_device(created_device, user_cookies):
     updated_device = get_response.json()
 
     assert updated_device["location"] == expected_location
+
+
+def test_create_device_unauthenticated():
+    mocked_device = {
+        "name": "Temperature Sensor",
+        "location": "Warehouse 1",
+        "sn": "123456789102",
+        "description": "Monitors temperature",
+    }
+
+    with pytest.raises(HTTPException):
+        response = client.post("/api/devices", data=mocked_device)
+        assert response.status_code == 401
+
+
+def test_create_device_status(user_cookies, created_device):
+    device_id = created_device["uuid"]
+    device_sn = created_device["sn"]
+
+    mocked_status = {
+        "device_sn": device_sn,
+        "conectivity": True,
+        "boot_date": "2023-10-01",
+        "cpu_usage": 45,
+        "ram_usage": 60,
+        "free_disk": 120,
+        "tempeture": 36.5,
+        "latency": 20,
+    }
+
+    response = client.post(f"/api/devices/{device_sn}/status", json=mocked_status)
+
+    assert response.status_code == 201
+
+    status_response = client.get(f"/api/devices/{device_sn}/status")
+    assert status_response.status_code == 200
+
+    status_data = status_response.json()
+    assert status_data[0]["device_id"] == device_id
+
+
+def test_list_device_status(create_multiple_status):
+    device_sn = create_multiple_status["sn"]
+    response = client.get(f"/api/devices/{device_sn}/status")
+
+    assert response.status_code == 200
+
+    statuses = response.json()
+
+    assert len(statuses) == 2
+
+
+def test_get_device_status(create_multiple_status):
+    assert False
