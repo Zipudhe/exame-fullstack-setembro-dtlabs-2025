@@ -32,7 +32,7 @@ class HearBeat(BaseModel):
     cpu_usage: Optional[int] = None
     ram_usage: Optional[int] = None
     free_disk: Optional[int] = None
-    tempeture: Optional[float] = None
+    temperature: Optional[float] = None
     latency: Optional[int] = None
 
 
