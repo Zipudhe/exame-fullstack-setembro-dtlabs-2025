@@ -32,26 +32,25 @@ class ThreshHoldConfig(HearBeat):
         return self
 
 
+class Notification(BaseModel):
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now())
+
+
 class NotificationConfig(BaseModel):
-    uuid: str = Field(default_factory=lambda: uuid4().hex)
+    _id: str = Field(default_factory=lambda: uuid4().hex)
     device_id: str
-    # user_id: str - will be added in the route after checking if device exists
     threshHold: ThreshHoldConfig
+    notifications: list[Notification] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
-
-
-class Notification(BaseModel):
-    device_id: str
-    notification_config_id: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now())
 
 
 NotificationConfigForm = Annotated[NotificationConfig, Form()]
 
 
 class NotificationConfigOut(BaseModel):
-    uuid: str
+    _id: str
     device_id: str
     user_id: str
     threshHold: ThreshHoldConfig

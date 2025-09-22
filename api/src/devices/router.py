@@ -41,7 +41,7 @@ async def get_devices(commons: DevicesQueryParamsDep, collection: DevicesCollect
 @router.get("/{device_id}", response_model=Device)
 async def get_device(device_id: str, collection: DevicesCollectionDep):
     # TODO: Always get most recent status
-    return collection.find_one({"uuid": device_id})
+    return collection.find_one({"_id": device_id})
 
 
 @router.get("/{device_sn}/status", response_model=list[DeviceStatusOut])
@@ -55,17 +55,13 @@ async def get_device_status(
     user_id = request.state.user_id
 
     try:
-        device = devices_collection.find_one(
-            {"sn": device_sn, "user_id": user_id}, {"uuid": 1}
-        )
+        device = devices_collection.find_one({"sn": device_sn, "user_id": user_id})
 
         if not device:
             return []
 
-        logger.info(f"device: {device['uuid']}")
-
         status = (
-            status_collection.find({"device_id": device["uuid"]})
+            status_collection.find({"device_id": device["_id"]})
             .skip(commons["skip"])
             .limit(commons["limit"])
         )
@@ -86,15 +82,13 @@ def create_device_status(
     user_id = request.state.user_id
 
     try:
-        device = devices_collection.find_one(
-            {"sn": device_sn, "user_id": user_id}, {"uuid": 1}
-        )
+        device = devices_collection.find_one({"sn": device_sn, "user_id": user_id})
 
         if not device:
             raise HTTPException(status_code=404, detail="Device not found")
 
         new_status = device_status.model_dump()
-        new_status["device_id"] = device["uuid"]
+        new_status["device_id"] = device["_id"]
         status_collection.insert_one(new_status)
 
     except Exception as e:
@@ -128,7 +122,7 @@ async def delete_device(
 ):
     user_id = request.state.user_id
     try:
-        collection.delete_one({"uuid": device_id, "user_id": user_id})
+        collection.delete_one({"_id": device_id, "user_id": user_id})
     except Exception as e:
         logger.error(f"Error deleting device: {device_id}\n detail: {e}")
         raise HTTPException(status_code=400, detail="Unable to delete device") from e
@@ -144,7 +138,7 @@ async def update_device(
 ):
     user_id = request.state.user_id
     update_values = device.model_dump(exclude_unset=True)
-    filter = {"user_id": user_id, "uuid": device_id}
+    filter = {"user_id": user_id, "_id": device_id}
 
     try:
         collection.update_one(filter, {"$set": update_values})
