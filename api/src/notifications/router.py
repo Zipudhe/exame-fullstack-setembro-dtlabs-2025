@@ -2,11 +2,13 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
+from starlette.status import HTTP_204_NO_CONTENT
 
 from src.schemas import CommonsDep
 
 from .schemas import NotificationConfig, NotificationConfigOut, NotificationConfigUpdate
 from .dependencies import NotificationsCollectionDep, NotificationsConfigCollectionDep
+from ..devices.dependencies import DevicesCollectionDep
 
 router = APIRouter(prefix="/notifications", tags=["devices"])
 logger = logging.getLogger(__name__)
@@ -32,14 +34,14 @@ async def get_notification_config(
     user_id = request.state.user_id
 
     try:
-        return collection.find_one({"user_id": user_id, "uuid": config_id})
+        return collection.find_one({"user_id": user_id, "_id": config_id})
     except Exception as e:
         logger.error(f"Error fetching notification configs: {e}")
         raise HTTPException(500, detail="Failed to fetch notification configs") from e
 
 
 @router.post("/config", status_code=status.HTTP_201_CREATED)
-async def create_notifications_config(
+async def create_notifications_config(  # Subscribe to a notificaiton stream for device
     notificationConfig: NotificationConfig,
     request: Request,
     collection: NotificationsConfigCollectionDep,
@@ -66,7 +68,7 @@ async def update_notifications_config(
 
     try:
         collection.update_one(
-            {"user_id": user_id, "uuid": notification_config_id},
+            {"user_id": user_id, "_id": notification_config_id},
             {"$set": notificationConfig.model_dump(exclude_unset=True)},
         )
     except Exception as e:
@@ -86,7 +88,7 @@ async def delete_notifications_config(
 ):
     user_id = request.state.user_id
     try:
-        collection.delete_one({"uuid": notification_config_id, "user_id": user_id})
+        collection.delete_one({"_id": notification_config_id, "user_id": user_id})
     except Exception as e:
         logger.error(f"Error deleting notification config: {e}")
         raise HTTPException(500, detail="Failed to delete notification config") from e
@@ -101,14 +103,40 @@ async def get_notifications(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_notifications(
+async def create_notifications(  # Notify user of event if it matches notification config
     request: Request, collection: NotificationsCollectionDep
 ):
     return
 
 
-@router.put("/{notification_id}")  # Soft delete mark notification as read
+@router.put(
+    "/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT
+)  # Soft delete mark notification as read
 async def mark_notification_as_read(
-    notification_id: str, request: Request, collection: NotificationsCollectionDep
+    notification_id: str,
+    request: Request,
+    collection: NotificationsCollectionDep,
+    device_collection: DevicesCollectionDep,
 ):
+    user_id = request.state.user_id
+    notificaiton = collection.find_one({"_id": notification_id})
+    if not notificaiton:
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+    device = device_collection.find_one(
+        {"_id": notificaiton["device_id"], "user_id": user_id}
+    )
+
+    if not device:
+        raise HTTPException(
+            status_code=401, detail="User not allowed to change notification"
+        )
+
+    try:
+        device.update({"read": True})
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to mark notification as read"
+        ) from e
+
     return

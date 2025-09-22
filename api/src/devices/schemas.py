@@ -6,19 +6,28 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Annotated, Optional
 
 
+class HearBeat(BaseModel):
+    cpu_usage: Optional[int] = None
+    ram_usage: Optional[int] = None
+    free_disk: Optional[int] = None
+    temperature: Optional[float] = None
+    latency: Optional[int] = None
+
+
 class Device(BaseModel):
-    uuid: str = Field(default_factory=lambda: uuid4().hex)
+    _id: str = Field(default_factory=lambda: uuid4().hex)
     name: str
     location: str
     sn: str = Field(pattern="^\\d{12}$", min_length=12, max_length=12)
     description: str
     user_id: Optional[str] = None
+    status: list[HearBeat] = []
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 
 class DeviceOut(BaseModel):
-    uuid: str
+    _id: str
     name: str
     location: str
     sn: str
@@ -28,16 +37,8 @@ class DeviceOut(BaseModel):
     updated_at: str
 
 
-class HearBeat(BaseModel):
-    cpu_usage: Optional[int] = None
-    ram_usage: Optional[int] = None
-    free_disk: Optional[int] = None
-    temperature: Optional[float] = None
-    latency: Optional[int] = None
-
-
 class DeviceStatusOut(HearBeat):
-    device_id: str
+    _id: str
     conectivity: bool
     boot_date: str
     created_at: str
@@ -59,7 +60,7 @@ class DeviceStatus(HearBeat):
 
 
 class DeviceCreated(BaseModel):
-    uuid: str
+    _id: str
 
 
 class DeviceUpdate(BaseModel):
