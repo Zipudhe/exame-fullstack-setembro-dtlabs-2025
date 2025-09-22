@@ -1,6 +1,8 @@
 import logging
 
 from redis import Redis
+from redis.cache import CacheConfig
+
 from pymongo import MongoClient
 from pymongo.database import Database
 from config.env_vars import get_database_host, get_database_credentials, get_redis_host
@@ -35,4 +37,6 @@ def check_client_connection():
 
 def get_redis_storage():
     host = get_redis_host()
-    return Redis(host=host, port=6379, db=0, decode_responses=True)
+    return Redis(
+        host=host, port=6379, db=0, decode_responses=True, cache_config=CacheConfig()
+    )
