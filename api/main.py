@@ -12,6 +12,7 @@ from config.logging import setup_logger
 
 from src.devices.router import router as devicesRouter
 from src.users.router import router as usersRouter
+from src.notifications.router import router as notificationsRouter
 from src.database import check_client_connection
 
 setup_logger()
@@ -42,6 +43,7 @@ app.add_middleware(UserIdAppend)
 
 app.include_router(usersRouter, prefix="/api", tags=["Users"])
 app.include_router(devicesRouter, prefix="/api", tags=["Devices"])
+app.include_router(notificationsRouter, prefix="/api", tags=["Notifications"])
 
 
 @app.get("/")
