@@ -8,6 +8,8 @@ from pymongo.database import Database
 from src.database import get_database, get_db_client
 
 client = TestClient(app)
+unauthenticated_client = TestClient(app)
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,12 +34,13 @@ def created_device(user_cookies):
 
     assert response.status_code == 201
 
-    created_device_id = response.json()
+    created_device_id = response.json()["id"]
 
-    mocked_device.update({"uuid": created_device_id["uuid"]})
+    mocked_device.update({"id": created_device_id})
+
     yield mocked_device
 
-    client.delete(f"/api/devices/{created_device_id['uuid']}")
+    client.delete(f"/api/devices/{created_device_id}")
 
 
 @pytest.fixture()
@@ -57,8 +60,10 @@ def database_cleanup():
 
 @pytest.fixture()
 def created_config(user_cookies, created_device):
+    device_id = created_device["id"]
+
     mocked_config = {
-        "device_id": created_device["uuid"],
+        "device_id": device_id,
         "threshHold": {
             "watch_keys": ["cpu_usage"],
             "cpu_usage": 30,
@@ -69,12 +74,12 @@ def created_config(user_cookies, created_device):
 
     assert response.status_code == 201
 
-    created_config_id = response.json()
+    created_config_id = response.json()["id"]
 
-    mocked_config.update({"uuid": created_config_id["uuid"]})
+    mocked_config.update({"id": created_config_id})
     yield mocked_config
 
-    client.delete(f"/api/notifications/config/{created_config_id['uuid']}")
+    client.delete(f"/api/notifications/config/{created_config_id}")
 
 
 @pytest.fixture()
@@ -105,7 +110,7 @@ def user_credentials():
 
 def test_create_notification_config(user_cookies, created_device):
     mocked_config = {
-        "device_id": created_device["uuid"],
+        "device_id": created_device["id"],
         "threshHold": {
             "watch_keys": ["cpu_usage"],
             "cpu_usage": 30,
@@ -120,7 +125,7 @@ def test_create_notification_config(user_cookies, created_device):
 @pytest.fixture()
 def create_multiple_notifications(user_cookies, created_device):
     mocked_notification_1 = {
-        "device_id": created_device["uuid"],
+        "device_id": created_device["id"],
         "threshHold": {
             "watch_keys": ["cpu_usage"],
             "cpu_usage": 30,
@@ -128,7 +133,7 @@ def create_multiple_notifications(user_cookies, created_device):
     }
 
     mocked_notification_2 = {
-        "device_id": created_device["uuid"],
+        "device_id": created_device["id"],
         "threshHold": {
             "watch_keys": ["cpu_usage", "ram_usage"],
             "cpu_usage": 30,
@@ -136,7 +141,7 @@ def create_multiple_notifications(user_cookies, created_device):
         },
     }
     mocked_notification_3 = {
-        "device_id": created_device["uuid"],
+        "device_id": created_device["id"],
         "threshHold": {"watch_keys": ["temperature"], "temperature": 75.5},
     }
 
@@ -162,7 +167,7 @@ def test_multiple_notifications(create_multiple_notifications):
 
 
 def test_delete_notification(create_multiple_notifications):
-    to_delete = client.get("/api/notifications/config").json()[0]["uuid"]
+    to_delete = client.get("/api/notifications/config").json()[0]["id"]
     excpected_count = len(create_multiple_notifications) - 1
 
     response = client.delete(f"/api/notifications/config/{to_delete}")
@@ -176,7 +181,7 @@ def test_delete_notification(create_multiple_notifications):
 
 def test_update_notification(create_multiple_notifications):
     to_update = client.get("/api/notifications/config").json()[0]
-    config_id = to_update["uuid"]
+    config_id = to_update["id"]
 
     updated_config = {
         **to_update,
@@ -188,20 +193,22 @@ def test_update_notification(create_multiple_notifications):
     assert response.status_code == 204
 
     updated_config = client.get(f"/api/notifications/config/{config_id}").json()
+    logger.info(f"updated_config: {updated_config}")
 
     assert updated_config["threshHold"]["cpu_usage"] == 50
 
 
-def test_create_noticaition_unauthenticated(created_device):
+def test_create_notification_config_unauthenticated(created_device):
     mocked_config = {
-        "device_id": created_device["uuid"],
+        "device_id": created_device["id"],
         "threshHold": {
             "watch_keys": ["cpu_usage"],
             "cpu_usage": 30,
         },
     }
 
-    client.cookies.clear()
     with pytest.raises(HTTPException):
-        response = client.post("/api/notifications/config", json=mocked_config)
+        response = unauthenticated_client.post(
+            "/api/notifications/config", json=mocked_config
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
