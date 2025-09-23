@@ -1,8 +1,8 @@
 import logging
 from typing import Optional
+from bson import ObjectId
 
 from fastapi import APIRouter, HTTPException, Request, status
-from starlette.status import HTTP_204_NO_CONTENT
 
 from src.schemas import CommonsDep
 
@@ -34,7 +34,10 @@ async def get_notification_config(
     user_id = request.state.user_id
 
     try:
-        return collection.find_one({"user_id": user_id, "_id": config_id})
+        notificaiton_config = collection.find_one(
+            {"user_id": user_id, "_id": ObjectId(config_id)}
+        )
+        return notificaiton_config
     except Exception as e:
         logger.error(f"Error fetching notification configs: {e}")
         raise HTTPException(500, detail="Failed to fetch notification configs") from e
@@ -68,7 +71,7 @@ async def update_notifications_config(
 
     try:
         collection.update_one(
-            {"user_id": user_id, "_id": notification_config_id},
+            {"user_id": user_id, "_id": ObjectId(notification_config_id)},
             {"$set": notificationConfig.model_dump(exclude_unset=True)},
         )
     except Exception as e:
@@ -88,7 +91,9 @@ async def delete_notifications_config(
 ):
     user_id = request.state.user_id
     try:
-        collection.delete_one({"_id": notification_config_id, "user_id": user_id})
+        collection.delete_one(
+            {"_id": ObjectId(notification_config_id), "user_id": user_id}
+        )
     except Exception as e:
         logger.error(f"Error deleting notification config: {e}")
         raise HTTPException(500, detail="Failed to delete notification config") from e
@@ -115,11 +120,11 @@ async def create_notifications(  # Notify user of event if it matches notificati
 async def mark_notification_as_read(
     notification_id: str,
     request: Request,
-    collection: NotificationsCollectionDep,
+    notification_collection: NotificationsCollectionDep,
     device_collection: DevicesCollectionDep,
 ):
     user_id = request.state.user_id
-    notificaiton = collection.find_one({"_id": notification_id})
+    notificaiton = notification_collection.find_one({"_id": notification_id})
     if not notificaiton:
         raise HTTPException(status_code=404, detail="Notification not found")
 
