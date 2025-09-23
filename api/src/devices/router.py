@@ -5,6 +5,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, status
 from pymongo.errors import ServerSelectionTimeoutError
 
+from src.websocket.stream import publish_to_stream, acknowledge_message
+
 from .dependencies import (
     DevicesCollectionDep,
     DevicesQueryParamsDep,
@@ -208,7 +210,7 @@ async def get_device_status(
 
 
 @router.post("/{device_sn}/status", status_code=status.HTTP_201_CREATED)
-def create_device_status(
+async def create_device_status(
     device_sn: str,
     request: Request,
     device_status: DeviceStatusInput,
@@ -216,6 +218,8 @@ def create_device_status(
 ):
     user_id = request.state.user_id
     new_status = device_status.model_dump()
+
+    await publish_to_stream(user_id, "new notification arrived")
 
     try:
         devices_collection.update_one(
@@ -229,6 +233,13 @@ def create_device_status(
             status_code=500, detail="Unable to create device status"
         ) from e
 
+    return
+
+
+@router.post("/ack")
+async def ack_device_notification(request: Request, message_id: str):
+    user_id = request.state.user_id
+    await acknowledge_message(user_id, message_id)
     return
 
 
