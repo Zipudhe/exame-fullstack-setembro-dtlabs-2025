@@ -5,14 +5,14 @@ from fastapi import APIRouter, Response, status, HTTPException
 from .dependencies import UserCollectionDep
 from src.schemas import RedisDep
 
-from .schemas import UserCreated, UserOut, UserInputForm, UserLoginForm
+from .schemas import UserOutPut, GetUser, UserInputForm, UserLoginForm
 from .utils import Hasher
 
 router = APIRouter(prefix="/users", tags=["devices"])
 logger = logging.getLogger(__name__)
 
 
-@router.post("/", response_model=UserCreated, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=UserOutPut, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserInputForm, collection: UserCollectionDep):
     newUser = user.model_dump()
     hashed_password = Hasher.get_password_hash(user.password)
@@ -27,7 +27,7 @@ def create_user(user: UserInputForm, collection: UserCollectionDep):
     return user
 
 
-@router.get("/{user_id}", response_model=UserOut)
+@router.get("/{user_id}", response_model=GetUser)
 def get_user(user_id: str, collection: UserCollectionDep):
     try:
         user = collection.find_one({"id": user_id})

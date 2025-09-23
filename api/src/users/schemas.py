@@ -22,7 +22,7 @@ SecurePassword = Annotated[str, AfterValidator(check_password_pattern)]
 
 
 class UserIn(BaseModel):
-    _id: str = Field(default_factory=lambda: uuid4().hex)
+    id: str = Field(default_factory=lambda: uuid4().hex, alias="_id")
     username: str = Field()
     password: SecurePassword = Field()
     model_config = {"extra": "forbid"}
@@ -39,10 +39,9 @@ UserInputForm = Annotated[UserIn, Form()]
 UserLoginForm = Annotated[UserLogin, Form()]
 
 
-class UserOut(BaseModel):
+class UserOutPut(BaseModel):
     id: str = Field()
+
+
+class GetUser(UserOutPut):
     username: str = Field()
-
-
-class UserCreated(BaseModel):
-    id: str = Field()
