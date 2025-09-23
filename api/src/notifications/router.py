@@ -4,8 +4,6 @@ from bson import ObjectId
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from src.schemas import CommonsDep
-
 from .schemas import NotificationConfig, NotificationConfigOut, NotificationConfigUpdate
 from .dependencies import NotificationsCollectionDep, NotificationsConfigCollectionDep
 from ..devices.dependencies import DevicesCollectionDep
@@ -97,20 +95,6 @@ async def delete_notifications_config(
     except Exception as e:
         logger.error(f"Error deleting notification config: {e}")
         raise HTTPException(500, detail="Failed to delete notification config") from e
-    return
-
-
-@router.get("/")
-async def get_notifications(
-    commons: CommonsDep, request: Request, collection: NotificationsCollectionDep
-):
-    return
-
-
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_notifications(  # Notify user of event if it matches notification config
-    request: Request, collection: NotificationsCollectionDep
-):
     return
 
 
