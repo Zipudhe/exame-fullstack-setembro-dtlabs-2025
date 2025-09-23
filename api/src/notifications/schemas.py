@@ -1,13 +1,25 @@
 import logging
-from uuid import uuid4
+
 from datetime import datetime
+from bson import ObjectId
 from fastapi import Form
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    Field,
+    ConfigDict,
+    field_validator,
+    model_validator,
+)
 from typing import Annotated, List, Optional
 
 from ..devices.schemas import HearBeat
 
 logger = logging.getLogger(__name__)
+
+PyObjectId = Annotated[
+    str, BeforeValidator(lambda v: str(v) if isinstance(v, ObjectId) else v)
+]
 
 
 class ThreshHoldConfig(HearBeat):
@@ -38,7 +50,6 @@ class Notification(BaseModel):
 
 
 class NotificationConfig(BaseModel):
-    _id: str = Field(default_factory=lambda: uuid4().hex)
     device_id: str
     threshHold: ThreshHoldConfig
     notifications: list[Notification] = []
@@ -50,12 +61,16 @@ NotificationConfigForm = Annotated[NotificationConfig, Form()]
 
 
 class NotificationConfigOut(BaseModel):
-    _id: str
+    id: PyObjectId = Field(validation_alias="_id")
     device_id: str
     user_id: str
     threshHold: ThreshHoldConfig
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(
+        validate_by_alias=True, validate_by_name=True, json_encoders={ObjectId: str}
+    )
 
 
 class NotificationConfigUpdate(BaseModel):
