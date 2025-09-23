@@ -1,0 +1,34 @@
+import { Outlet, redirect } from "react-router";
+import type { Route } from "../+types/root";
+
+export async function loader() {
+  return null
+}
+
+// Server side middleware
+function authMiddleware({ request, context }: { request: Request, context: any }) {
+  const cookies = request.headers.get("Cookie") || ""
+
+  if (!cookies) {
+    throw redirect('/login')
+  }
+
+  const session_id = cookies.split("; ").find(c => c.startsWith("session_id="))?.split("=")[1]
+
+  if (!session_id) {
+    throw redirect('/login')
+  }
+}
+
+export const middleware: Route.MiddlewareFunction[] = [authMiddleware]
+
+function AuthLayout() {
+
+  return (
+    <>
+      <Outlet />
+    </>
+  )
+}
+
+export default AuthLayout;
