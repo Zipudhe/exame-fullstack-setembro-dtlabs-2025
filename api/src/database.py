@@ -1,10 +1,10 @@
 import logging
 
-from redis import Redis
-
+from config.env_vars import get_database_credentials, get_database_host, get_redis_host
 from pymongo import MongoClient
 from pymongo.database import Database
-from config.env_vars import get_database_host, get_database_credentials, get_redis_host
+from redis import Redis
+from redis import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -37,3 +37,8 @@ def check_client_connection():
 def get_redis_storage():
     host = get_redis_host()
     return Redis(host=host, port=6379, db=0, decode_responses=True)
+
+
+def get_async_redis_storage():
+    host = get_redis_host()
+    return asyncio.Redis(host=host, port=6379, db=0, decode_responses=True)
