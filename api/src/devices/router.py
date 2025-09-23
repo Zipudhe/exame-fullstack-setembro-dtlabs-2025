@@ -7,16 +7,14 @@ from pymongo.errors import ServerSelectionTimeoutError
 from .dependencies import (
     DevicesCollectionDep,
     DevicesQueryParamsDep,
-    StatusCollectionDep,
 )
 from .schemas import (
-    Device,
     DeviceCreated,
     DeviceForm,
     DeviceOut,
     DeviceStatus,
+    DeviceStatusInput,
     DeviceUpdateForm,
-    DeviceStatusOut,
 )
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -27,7 +25,9 @@ logger = logging.getLogger(__name__)
 async def get_devices(commons: DevicesQueryParamsDep, collection: DevicesCollectionDep):
     try:
         devices = (
-            collection.find(commons["q"]).skip(commons["skip"]).limit(commons["limit"])
+            collection.find(commons["q"])
+            .skip(commons["skip"])
+            .limit(commons["limit"])  # TODO Limit heartbeat to most recent one
         )
         return devices
     except ServerSelectionTimeoutError as db_err:
@@ -38,34 +38,84 @@ async def get_devices(commons: DevicesQueryParamsDep, collection: DevicesCollect
         raise HTTPException(status_code=500, detail="Unable to retrieve devices")
 
 
-@router.get("/{device_id}", response_model=Device)
-async def get_device(device_id: str, collection: DevicesCollectionDep):
-    # TODO: Always get most recent status
-    return collection.find_one({"_id": device_id})
+@router.get("/{device_id}", response_model=DeviceOut)
+async def get_device(
+    request: Request, device_id: str, collection: DevicesCollectionDep
+):
+    # TODO: return queried Heartbeat
+    user_id = request.state.user_id
+    pipeline = [
+        {
+            "$match": {"id": device_id, "user_id": user_id},
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "id": 1,
+                "name": 1,
+                "location": 1,
+                "sn": 1,
+                "description": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "user_id": 1,
+                "status": {
+                    "$arrayElemAt": ["$status", 0],
+                },
+            }
+        },
+    ]
+
+    try:
+        device = collection.aggregate(pipeline).to_list()
+    except Exception as e:
+        logger.error(f"Error retrieving device: {e}")
+        raise HTTPException(500, "Failed to get device") from e
+
+    return device[0]
 
 
-@router.get("/{device_sn}/status", response_model=list[DeviceStatusOut])
+@router.get("/{device_sn}/status", response_model=list[DeviceStatus])
 async def get_device_status(
     device_sn: str,
     request: Request,
-    status_collection: StatusCollectionDep,
     devices_collection: DevicesCollectionDep,
     commons: DevicesQueryParamsDep,
 ):
     user_id = request.state.user_id
 
-    try:
-        device = devices_collection.find_one({"sn": device_sn, "user_id": user_id})
+    pipeline = [
+        {
+            "$match": {"sn": device_sn, "user_id": user_id},
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "status": {
+                    "$slice": [
+                        {
+                            "$sortArray": {
+                                "input": "$status",
+                                "sortBy": {"created_at": -1},
+                            }
+                        },
+                        commons["skip"],
+                        commons["limit"],
+                    ],
+                },
+            }
+        },
+    ]
 
-        if not device:
+    try:
+        statuses = devices_collection.aggregate(pipeline)  # Revisar schema de saida
+
+        if not statuses:
             return []
 
-        status = (
-            status_collection.find({"device_id": device["_id"]})
-            .skip(commons["skip"])
-            .limit(commons["limit"])
-        )
-        return status
+        status_list = statuses.to_list()[0]["status"]
+        return status_list
+
     except Exception as e:
         logger.error(f"Error retrieving device status: {e}")
         raise HTTPException(500, "Failed to get device status") from e
@@ -75,21 +125,17 @@ async def get_device_status(
 def create_device_status(
     device_sn: str,
     request: Request,
-    device_status: DeviceStatus,
-    status_collection: StatusCollectionDep,
+    device_status: DeviceStatusInput,
     devices_collection: DevicesCollectionDep,
 ):
     user_id = request.state.user_id
+    new_status = device_status.model_dump()
 
     try:
-        device = devices_collection.find_one({"sn": device_sn, "user_id": user_id})
-
-        if not device:
-            raise HTTPException(status_code=404, detail="Device not found")
-
-        new_status = device_status.model_dump()
-        new_status["device_id"] = device["_id"]
-        status_collection.insert_one(new_status)
+        devices_collection.update_one(
+            {"sn": device_sn, "user_id": user_id},
+            {"$push": {"status": {"$each": [new_status], "$position": 0}}},
+        )
 
     except Exception as e:
         logger.error(f"Error creating device status: {e}")
@@ -122,7 +168,7 @@ async def delete_device(
 ):
     user_id = request.state.user_id
     try:
-        collection.delete_one({"_id": device_id, "user_id": user_id})
+        collection.delete_one({"id": device_id, "user_id": user_id})
     except Exception as e:
         logger.error(f"Error deleting device: {device_id}\n detail: {e}")
         raise HTTPException(status_code=400, detail="Unable to delete device") from e
@@ -138,7 +184,7 @@ async def update_device(
 ):
     user_id = request.state.user_id
     update_values = device.model_dump(exclude_unset=True)
-    filter = {"user_id": user_id, "_id": device_id}
+    filter = {"user_id": user_id, "id": device_id}
 
     try:
         collection.update_one(filter, {"$set": update_values})

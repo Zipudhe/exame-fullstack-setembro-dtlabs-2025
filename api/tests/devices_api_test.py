@@ -40,7 +40,6 @@ def user_cookies(user_credentials):
     response = client.post("/api/users/login", data=user_credentials)
 
     session_id = response.cookies.get("session_id")
-    logger.info(f"session_id: {session_id}")
     if session_id:
         client.cookies.set("session_id", session_id)
 
@@ -85,12 +84,12 @@ def created_device(user_cookies):
 
     assert response.status_code == 201
 
-    created_device_id = response.json()
+    created_device_id = response.json()["id"]
 
-    mocked_device.update({"uuid": created_device_id["uuid"]})
+    mocked_device.update({"id": created_device_id})
     yield mocked_device
 
-    client.delete(f"/api/devices/{created_device_id['uuid']}")
+    client.delete(f"/api/devices/{created_device_id}")
 
 
 def test_create_device(user_cookies):
@@ -213,7 +212,7 @@ def test_get_single_device(created_device, user_cookies):
     expected_sn = created_device["sn"]
 
     response = client.get(
-        f"/api/devices/{created_device['uuid']}",
+        f"/api/devices/{created_device['id']}",
         cookies=user_cookies,
     )
 
@@ -226,7 +225,7 @@ def test_get_single_device(created_device, user_cookies):
 
 def test_delete_device(created_device, user_cookies):
     response = client.delete(
-        f"/api/devices/{created_device['uuid']}",
+        f"/api/devices/{created_device['id']}",
         cookies=user_cookies,
     )
 
@@ -235,18 +234,18 @@ def test_delete_device(created_device, user_cookies):
 
 def test_update_device(created_device, user_cookies):
     expected_location = "Warehouse 3"
-    device_uuid = created_device["uuid"]
+    device_id = created_device["id"]
 
     update_device = {"location": expected_location}
 
     response = client.put(
-        f"/api/devices/{device_uuid}", cookies=user_cookies, data=update_device
+        f"/api/devices/{device_id}", cookies=user_cookies, data=update_device
     )
 
     assert response.status_code == 200
 
     get_response = client.get(
-        f"/api/devices/{device_uuid}",
+        f"/api/devices/{device_id}",
         cookies=user_cookies,
     )
 
@@ -269,7 +268,6 @@ def test_create_device_unauthenticated():
 
 
 def test_create_device_status(user_cookies, created_device):
-    device_id = created_device["uuid"]
     device_sn = created_device["sn"]
 
     mocked_status = {
@@ -291,7 +289,10 @@ def test_create_device_status(user_cookies, created_device):
     assert status_response.status_code == 200
 
     status_data = status_response.json()
-    assert status_data[0]["device_id"] == device_id
+
+    assert len(status_data) == 1
+
+    assert status_data[0]["boot_date"] == "2023-10-01"
 
 
 def test_list_device_status(create_multiple_status):
@@ -306,4 +307,24 @@ def test_list_device_status(create_multiple_status):
 
 
 def test_get_device_status(create_multiple_status):
-    assert False
+    device_sn = create_multiple_status["sn"]
+
+    response = client.get(f"/api/devices/{device_sn}/status")
+
+    assert response.status_code == 200
+
+    statuses = response.json()
+
+    assert len(statuses) == 2
+
+
+def test_get_filtered_device_status(create_multiple_status):
+    device_sn = create_multiple_status["sn"]
+
+    response = client.get(f"/api/devices/{device_sn}/status", params={"skip": 1})
+
+    assert response.status_code == 200
+
+    statuses = response.json()
+
+    assert len(statuses) == 1

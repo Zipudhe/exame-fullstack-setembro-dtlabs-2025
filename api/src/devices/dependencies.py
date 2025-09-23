@@ -1,17 +1,14 @@
+from datetime import datetime
+
 from typing import Annotated
 from fastapi import Depends
 from pymongo.collection import Collection
 from src.schemas import DatabaseDep
 
 
-def get_dependencie_collection(db: DatabaseDep) -> Collection:
+def get_devices_collection(db: DatabaseDep) -> Collection:
     devices_collection = db.get_collection("devices")
     return devices_collection
-
-
-def get_status_collection(db: DatabaseDep) -> Collection:
-    status_collection = db.get_collection("device_status")
-    return status_collection
 
 
 def get_devices_query_params(
@@ -33,12 +30,11 @@ def get_devices_query_params(
         q.update({"sn": sn})
 
     if created_at:
-        q.update({"creatd_at": created_at})
+        q.update({"creatd_at": datetime.fromisoformat(created_at).date().isoformat()})
 
     return {"q": q, "skip": skip, "limit": limit}
 
 
-DevicesCollectionDep = Annotated[Collection, Depends(get_dependencie_collection)]
-StatusCollectionDep = Annotated[Collection, Depends(get_status_collection)]
+DevicesCollectionDep = Annotated[Collection, Depends(get_devices_collection)]
 
 DevicesQueryParamsDep = Annotated[dict, Depends(get_devices_query_params)]

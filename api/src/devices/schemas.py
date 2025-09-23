@@ -1,9 +1,9 @@
+from datetime import datetime
+from typing import Annotated, Optional
 from uuid import uuid4
 
-from datetime import datetime
 from fastapi import Form
 from pydantic import BaseModel, Field, field_validator
-from typing import Annotated, Optional
 
 
 class HearBeat(BaseModel):
@@ -14,38 +14,13 @@ class HearBeat(BaseModel):
     latency: Optional[int] = None
 
 
-class Device(BaseModel):
-    _id: str = Field(default_factory=lambda: uuid4().hex)
-    name: str
-    location: str
-    sn: str = Field(pattern="^\\d{12}$", min_length=12, max_length=12)
-    description: str
-    user_id: Optional[str] = None
-    status: list[HearBeat] = []
-    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-
-
-class DeviceOut(BaseModel):
-    _id: str
-    name: str
-    location: str
-    sn: str
-    description: str
-    user_id: str
-    created_at: str
-    updated_at: str
-
-
-class DeviceStatusOut(HearBeat):
-    _id: str
-    conectivity: bool
-    boot_date: str
-    created_at: str
-
-
 class DeviceStatus(HearBeat):
-    device_sn: str
+    conectivity: bool
+    boot_date: str = Field()
+    created_at: str
+
+
+class DeviceStatusInput(HearBeat):
     conectivity: bool
     boot_date: str = Field()
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
@@ -59,8 +34,31 @@ class DeviceStatus(HearBeat):
             raise ValueError("boot_date must be in ISO format (YYYY-MM-DD)") from e
 
 
+class Device(BaseModel):
+    id: str = Field(default_factory=lambda: uuid4().hex)
+    name: str
+    location: str
+    sn: str = Field(pattern="^\\d{12}$", min_length=12, max_length=12)
+    description: str
+    status: Optional[list[DeviceStatus]] = []
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+class DeviceOut(BaseModel):
+    id: str = Field()
+    name: str
+    location: str
+    sn: str
+    description: str
+    status: list[DeviceStatus] = []
+    user_id: str
+    created_at: str
+    updated_at: str
+
+
 class DeviceCreated(BaseModel):
-    _id: str
+    id: str = Field()
 
 
 class DeviceUpdate(BaseModel):
