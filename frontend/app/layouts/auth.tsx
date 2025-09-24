@@ -1,5 +1,6 @@
 import { Outlet, redirect } from "react-router";
 import type { Route } from "../+types/root";
+import Navbar from "../components/navbar";
 
 export async function loader() {
   return null
@@ -22,13 +23,14 @@ function authMiddleware({ request, context }: { request: Request, context: any }
 
 export const middleware: Route.MiddlewareFunction[] = [authMiddleware]
 
-function AuthLayout() {
+function AuthenticatedLayout() {
 
   return (
     <>
+      <Navbar />
       <Outlet />
     </>
   )
 }
 
-export default AuthLayout;
+export default AuthenticatedLayout;

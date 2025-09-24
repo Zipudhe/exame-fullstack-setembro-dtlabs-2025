@@ -19,3 +19,7 @@ export const login = (payload: FormData) => {
   })
 }
 
+export const logOut = () => {
+  return api.post('/users/logout', { withCredentias: true })
+}
+
