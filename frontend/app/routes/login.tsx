@@ -1,6 +1,32 @@
 import type { Route } from "./+types/login";
+import { Form, redirect } from 'react-router'
+import { login } from '../lib/api'
 
-export default function Login() {
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const formData = await request.formData()
+
+  return await login(formData)
+    .then(() => {
+      return redirect("/")
+    })
+    .catch((error) => {
+      if (!error.response) {
+        return { error: "Servidor indisponível" }
+      }
+
+      if (!error.response.data) {
+        return { error: "Algo deu errado" }
+      }
+      if (error.response.data.detail == "Invalid credentials") {
+        return { error: "Email ou senha incorreto" }
+      }
+
+      return { error: "Algo deu errado" }
+    })
+}
+
+export default function Login({ actionData }: Route.ComponentProps) {
+
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
@@ -13,7 +39,8 @@ export default function Login() {
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form action="#" method="POST" className="space-y-6">
+        <Form method="post" className="space-y-6">
+          {actionData && actionData.error && <p className="text-red-500 italic" > {actionData.error} </p>}
           <div>
             <label htmlFor="email" className="block text-sm/6 font-medium text-gray-100">
               Email address
@@ -61,8 +88,7 @@ export default function Login() {
               Sign in
             </button>
           </div>
-        </form>
-
+        </Form>
       </div>
     </div>
   );
