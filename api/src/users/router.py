@@ -1,8 +1,9 @@
 import logging
 from uuid import uuid4
-from fastapi import APIRouter, Response, status, HTTPException
+from fastapi import APIRouter, Response, status, HTTPException, Request
 
 from .dependencies import UserCollectionDep
+from config.env_vars import get_enviroment
 from src.schemas import RedisDep
 
 from .schemas import UserOutPut, GetUser, UserInputForm, UserLoginForm
@@ -10,6 +11,7 @@ from .utils import Hasher
 
 router = APIRouter(prefix="/users", tags=["devices"])
 logger = logging.getLogger(__name__)
+enviroment = get_enviroment()
 
 
 @router.post("/", response_model=UserOutPut, status_code=status.HTTP_201_CREATED)
@@ -25,6 +27,16 @@ def create_user(user: UserInputForm, collection: UserCollectionDep):
         raise HTTPException(status_code=400, detail="Unable to create user")
 
     return user
+
+
+@router.post("/auth", status_code=status.HTTP_204_NO_CONTENT)
+def auth_user(request: Request):
+    session = request.cookies.get("session_id")
+
+    if not session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    return {"message": "Authorized"}
 
 
 @router.get("/{user_id}", response_model=GetUser)
@@ -46,7 +58,7 @@ def create_session(
     response: Response,
 ):
     try:
-        user = users_collection.find_one({"username": user_data.username})
+        user = users_collection.find_one({"email": user_data.email})
 
         if not user:
             raise ValueError("Invalid credentials")
@@ -63,8 +75,8 @@ def create_session(
             key="session_id",
             value=session_id,
             httponly=True,
-            secure=False,
-            samesite="none",
+            secure=False if enviroment == "development" else True,
+            samesite="lax",
             expires=3600,
             max_age=3600,
         )
