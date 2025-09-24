@@ -17,6 +17,21 @@ services:
       - ".env"
     volumes:
       - mongo_volume:/data/db
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: "on-failure"
+    env_file:
+      - ".env"
+    environment:
+      MONGODB_HOST: "mongodb"
+      REDIS_HOST: "redis"
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /api
 
 volumes:
   redis_data:
