@@ -28,7 +28,9 @@ function AuthenticatedLayout() {
   return (
     <>
       <Navbar />
-      <Outlet />
+      <main className="p-8">
+        <Outlet />
+      </main>
     </>
   )
 }

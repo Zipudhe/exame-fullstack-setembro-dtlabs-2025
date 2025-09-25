@@ -5,8 +5,10 @@ export default [
     index("routes/home.tsx"),
 
     ...prefix("devices", [
-      index("routes/devices/home.tsx"),
-      route(":deviceId", "routes/devices/details.tsx"),
+      layout("./layouts/device.tsx", [
+        route(":deviceId", "routes/devices/details.tsx"),
+        route(":deviceId/graph", "routes/devices/graph.tsx"),
+      ]),
       route("register", "routes/devices/register.tsx"),
     ]),
 
