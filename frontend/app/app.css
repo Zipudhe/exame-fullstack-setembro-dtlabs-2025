@@ -8,6 +8,10 @@
 html,
 body {
   @apply bg-white dark:bg-gray-950;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
