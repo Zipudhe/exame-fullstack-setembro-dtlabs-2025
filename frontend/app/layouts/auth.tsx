@@ -28,7 +28,7 @@ function AuthenticatedLayout() {
   return (
     <>
       <Navbar />
-      <main className="p-8">
+      <main className="p-6 flex flex-1 justify-center max-h[calc(100vh-80px)] overflow-hidden">
         <Outlet />
       </main>
     </>
