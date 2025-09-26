@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState } from 'react'
@@ -112,7 +111,7 @@ function Navbar() {
               <div className="py-6">
                 <button
                   onClick={handleLogout}
-                  className=" items-center flex gap-x-2 -mx-3 w-fit-content block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white hover:bg-white/5"
+                  className=" items-center flex gap-x-2 -mx-3 w-fit-content rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white hover:bg-white/5"
                 >
                   <ArrowLeftStartOnRectangleIcon aria-hidden="true" className="size-4" />
                   Log in
