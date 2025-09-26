@@ -11,25 +11,51 @@ from .dependencies import (
 from .schemas import (
     DeviceCreated,
     DeviceForm,
-    DeviceOut,
+    DeviceDetails,
+    DeviceSummary,
     DeviceStatus,
     DeviceStatusInput,
-    DeviceUpdateForm,
+    DeviceUpdate,
 )
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("/", response_model=Optional[list[DeviceOut]])
-async def get_devices(commons: DevicesQueryParamsDep, collection: DevicesCollectionDep):
+@router.get("/", response_model=Optional[list[DeviceSummary]])
+async def get_devices(
+    request: Request, commons: DevicesQueryParamsDep, collection: DevicesCollectionDep
+):
+    user_id = request.state.user_id
+
+    pipeline = [
+        {"$skip": commons["skip"]},
+        {"$limit": commons["limit"]},
+        {
+            "$match": {
+                "user_id": user_id,
+            },
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "id": 1,
+                "name": 1,
+                "location": 1,
+                "sn": 1,
+                "description": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "status": {
+                    "$arrayElemAt": ["$status", 0],
+                },
+            }
+        },
+    ]
     try:
-        devices = (
-            collection.find(commons["q"])
-            .skip(commons["skip"])
-            .limit(commons["limit"])  # TODO Limit heartbeat to most recent one
-        )
-        return devices
+        return collection.aggregate(
+            pipeline,
+        ).to_list()
     except ServerSelectionTimeoutError as db_err:
         logger.error(f"Database connection error: {db_err}")
         raise HTTPException(status_code=503, detail="Database connection error")
@@ -38,11 +64,13 @@ async def get_devices(commons: DevicesQueryParamsDep, collection: DevicesCollect
         raise HTTPException(status_code=500, detail="Unable to retrieve devices")
 
 
-@router.get("/{device_id}", response_model=DeviceOut)
+@router.get("/{device_id}", response_model=DeviceDetails)
 async def get_device(
-    request: Request, device_id: str, collection: DevicesCollectionDep
+    commons: DevicesQueryParamsDep,
+    request: Request,
+    device_id: str,
+    collection: DevicesCollectionDep,
 ):
-    # TODO: return queried Heartbeat
     user_id = request.state.user_id
     pipeline = [
         {
@@ -58,9 +86,17 @@ async def get_device(
                 "description": 1,
                 "created_at": 1,
                 "updated_at": 1,
-                "user_id": 1,
                 "status": {
-                    "$arrayElemAt": ["$status", 0],
+                    "$slice": [
+                        {
+                            "$sortArray": {
+                                "input": "$status",
+                                "sortBy": {"created_at": -1},
+                            }
+                        },
+                        commons["skip"],
+                        commons["limit"],
+                    ],
                 },
             }
         },
@@ -75,9 +111,9 @@ async def get_device(
     return device[0]
 
 
-@router.get("/{device_sn}/status", response_model=list[DeviceStatus])
+@router.get("/{device_id}/status", response_model=list[DeviceStatus])
 async def get_device_status(
-    device_sn: str,
+    device_id: str,
     request: Request,
     devices_collection: DevicesCollectionDep,
     commons: DevicesQueryParamsDep,
@@ -86,7 +122,7 @@ async def get_device_status(
 
     pipeline = [
         {
-            "$match": {"sn": device_sn, "user_id": user_id},
+            "$match": {"id": device_id, "user_id": user_id},
         },
         {
             "$project": {
@@ -150,9 +186,18 @@ def create_device_status(
 async def create_device(
     device: DeviceForm, request: Request, collection: DevicesCollectionDep
 ):
+    new_device = device.model_dump(mode="json")
+    user_id = request.state.user_id
+    sn_exists = collection.find_one({"user_id": user_id, "sn": new_device["sn"]})
+
+    if sn_exists:
+        raise HTTPException(
+            status_code=400, detail="Device with serial number already exists"
+        )
+
     try:
-        new_device = device.model_dump()
         new_device["user_id"] = request.state.user_id
+        new_device["status"] = []
 
         collection.insert_one(new_device)
     except Exception as e:
@@ -178,12 +223,13 @@ async def delete_device(
 @router.put("/{device_id}", status_code=status.HTTP_200_OK)
 async def update_device(
     device_id: str,
-    device: DeviceUpdateForm,
+    device: DeviceUpdate,
     collection: DevicesCollectionDep,
     request: Request,
 ):
     user_id = request.state.user_id
     update_values = device.model_dump(exclude_unset=True)
+    print(f"{update_values}")
     filter = {"user_id": user_id, "id": device_id}
 
     try:

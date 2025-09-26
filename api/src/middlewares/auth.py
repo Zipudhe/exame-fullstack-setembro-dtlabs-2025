@@ -11,7 +11,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
 
-        if any(path.startswith(route) for route in public_routes):
+        if path == "/" or any(path.startswith(route) for route in public_routes):
+            return await call_next(request)
+
+        if request.method == "OPTIONS":
             return await call_next(request)
 
         session_id = request.cookies.get("session_id")
