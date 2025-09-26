@@ -50,7 +50,6 @@ class Notification(BaseModel):
 
 
 class NotificationConfig(BaseModel):
-    device_id: str
     threshHold: ThreshHoldConfig
     notifications: list[Notification] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now())
@@ -62,7 +61,6 @@ NotificationConfigForm = Annotated[NotificationConfig, Form()]
 
 class NotificationConfigOut(BaseModel):
     id: PyObjectId = Field(validation_alias="_id")
-    device_id: str
     user_id: str
     threshHold: ThreshHoldConfig
     created_at: datetime

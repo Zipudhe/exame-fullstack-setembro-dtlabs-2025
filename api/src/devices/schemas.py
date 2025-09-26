@@ -40,19 +40,29 @@ class Device(BaseModel):
     location: str
     sn: str = Field(pattern="^\\d{12}$", min_length=12, max_length=12)
     description: str
-    status: Optional[list[DeviceStatus]] = []
+    status: list[DeviceStatus] = []
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 
-class DeviceOut(BaseModel):
+class DeviceSummary(BaseModel):
+    id: str = Field()
+    name: str
+    location: str
+    sn: str
+    description: str
+    status: Optional[DeviceStatus] = None
+    created_at: str
+    updated_at: str
+
+
+class DeviceDetails(BaseModel):
     id: str = Field()
     name: str
     location: str
     sn: str
     description: str
     status: list[DeviceStatus] = []
-    user_id: str
     created_at: str
     updated_at: str
 
@@ -69,4 +79,3 @@ class DeviceUpdate(BaseModel):
 
 
 DeviceForm = Annotated[Device, Form()]
-DeviceUpdateForm = Annotated[DeviceUpdate, Form()]

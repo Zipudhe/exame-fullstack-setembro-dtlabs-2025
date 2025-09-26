@@ -12,7 +12,10 @@ class UserIdAppend(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
 
-        if any(path.startswith(route) for route in public_routes):
+        if path == "/" or any(path.startswith(route) for route in public_routes):
+            return await call_next(request)
+
+        if request.method == "OPTIONS":
             return await call_next(request)
 
         redis_store = get_redis_storage()

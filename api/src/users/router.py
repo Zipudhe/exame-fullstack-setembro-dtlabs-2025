@@ -57,12 +57,16 @@ def create_session(
     redis_client: RedisDep,
     response: Response,
 ):
+    logger.debug(f"Attempting login for user: {user_data.email}")
     try:
         user = users_collection.find_one({"email": user_data.email})
+        print(f"user: {user}")
 
         if not user:
+            logger.debug("user not found")
             raise ValueError("Invalid credentials")
 
+        logger.info(f"username: {user['username']} \t password: {user['password']}")
         password_valid = Hasher.verify_password(user_data.password, user["password"])
 
         if not password_valid:
@@ -87,5 +91,34 @@ def create_session(
     except Exception as e:
         logger.debug(f"Failed to create session: {e}")
         raise HTTPException(status_code=400, detail="Unable to create session")
+
+    return
+
+
+@router.delete("/logout", status_code=status.HTTP_200_OK)
+def delete_session(
+    request: Request,
+    users_collection: UserCollectionDep,
+    response: Response,
+    redis_client: RedisDep,
+):
+    user_id = request.cookies.get("session_id")
+    user_session = f"userSession:{user_id}"
+
+    try:
+        user = users_collection.find_one({"id": user_session})
+
+        if not user:
+            raise ValueError("Invalid credentials")
+
+        redis_client.delete(user_session)
+        response.delete_cookie(key="session_id")
+
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    except Exception as e:
+        logger.debug(f"Failed to remove session: {e}")
+        raise HTTPException(status_code=400, detail="Unable to delete session")
 
     return
