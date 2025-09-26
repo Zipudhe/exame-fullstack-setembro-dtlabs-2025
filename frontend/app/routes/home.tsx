@@ -29,7 +29,7 @@ export function HydrateFallback() {
 export default function Home({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate()
   return (
-    <div className="relative w-full grid grid-cols-[repeat(auto-fit,minmax(200px,300px))] grid-flow-col-dense justify-center gap-x-2 gap-y-4" >
+    <div className="relative w-full max-w-3/4 grid grid-cols-2 md:grid-cols-4 3xl:grid-cols-6 place-items-center gap-x-2 gap-y-4 overflow-scroll" >
       {
         loaderData && loaderData.map(device => <DeviceCard key={device.id} device={device} navigate={navigate} />)
       }
