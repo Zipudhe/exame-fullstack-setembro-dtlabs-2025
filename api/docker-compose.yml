@@ -17,6 +17,7 @@ services:
       - ".env"
     volumes:
       - mongo_volume:/data/db
+
   api:
     build: .
     ports:
