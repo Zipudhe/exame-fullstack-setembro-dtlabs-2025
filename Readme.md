@@ -56,9 +56,9 @@
 
 ### Tarefas Frontend
 
-- [ ] Criar pagina de login
-- [ ] Criar pagina Home
-- [ ] Criar pagina de listagem de devices
+- [x] Criar pagina de login
+- [x] Criar pagina Home
+- [x] Criar pagina de listagem de devices
   - [ ] Criar modelos de gráficos
 - [ ] Criar pagina de edição de devices
 - [ ] Criar pagina listagem notificacoes
@@ -66,25 +66,25 @@
 
 ### Tarefas API
 
-- [ ] Usuario configurável padrão para testes
+- [x] Usuario padrão para testes
 - [x] Criar rota de login de usuário
-- [ ] Criar rotas dispostivos
-  - [ ] listagem completa com filtros (paginacão)
-  - [ ] listagem resumida (CPU, RAM e Temp) (paginacão)
-- [ ] Criar rotas de notificações
-  - [ ] Listagem de notificações
-  - [ ] Criar de notificação
-  - [ ] Editar de notificação
-  - [ ] Remover notificação
-- [ ] Criar rota de edição de dispostivos
+- [x] Criar rotas dispostivos
+  - [x] listagem completa com filtros (paginacão)
+  - [x] listagem resumida (CPU, RAM e Temp) (paginacão)
+- [x] Criar rotas de notificações
+  - [x] Listagem de notificações
+  - [x] Criar de notificação
+  - [x] Editar de notificação
+  - [x] Remover notificação
+- [x] Criar rota de edição de dispostivos
 - [x] Configurar logger
 
 ## Histórias do Usuário
 
 - [x] Criar rota de login para usuarios
-- [ ] Como usuario quero poder ter acesso a uma listagem dos meus
+- [x] Como usuario quero poder ter acesso a uma listagem dos meus
   dispostivos
-- [ ] Como usuario quero um resume dos status de CPU, RAM e temperatura dos dispostivos
+- [x] Como usuario quero um resumo dos status de CPU, RAM e temperatura dos dispostivos
 - [ ] Como usuario quero ser capaz de filtrar meus dispostivos
 - [ ] Como usuário quero ver gráficos do histórico de dados de heartbeats
 - [ ] Como usuário quero ser capaz de filtrar período de histórico
@@ -92,9 +92,9 @@
 - [ ] Como usuário quero ser capaz de visualizar minhas notificações criadas.
 - [ ] Como usuário quero receber notificações em tempo real
 de acordo com minhas notificações configuradas
-- [ ] Como usuário quero registrar novos dispostivos
-- [ ] Como usuário quero editar meus dispostivos
-- [ ] Como usuário quero remover dispostivos
+- [x] Como usuário quero registrar novos dispostivos
+- [x] Como usuário quero editar meus dispostivos
+- [x] Como usuário quero remover dispostivos
 
 ## Stack
 
