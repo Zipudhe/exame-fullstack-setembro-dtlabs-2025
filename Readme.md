@@ -5,11 +5,8 @@
   - [API (FastAPI)](#api-fastapi)
   - [Frontend (React)](#frontend-react)
   - [Infra(Docker/docker-compose)](#infradockerdocker-compose)
-  - [Tarefas](#tarefas)
-    - [Tarefas Frontend](#tarefas-frontend)
-    - [Tarefas API](#tarefas-api)
-  - [Histórias do Usuário](#histórias-do-usuário)
-  - [Stack](#stack)
+  - [Instrução de Uso](#instrução-de-uso)
+    - [Backend](#backend)
 <!--toc:end-->
 
 ## API (FastAPI)
@@ -43,6 +40,21 @@
   - Conectividade
     - 0 caso não tenha conexão com o DNS
     - 1 caso tenha conexção com o DNS
+
+## Instrução de Uso
+
+### Backend
+
+- para rodar a aplicação do backend check a as variáveis de ambiente necessárias
+- Com as variáveis configuradas rode o comando
+  bash```
+    docker-compose up
+
+  ```
+  - Com os serviços rodando caso seja necessário rode o comando de seed da api 
+    bash```
+        docker exec <container-name> python3 -m config.seed
+      ```
 
 ## Tarefas
 
@@ -85,11 +97,11 @@
 - [x] Como usuario quero poder ter acesso a uma listagem dos meus
   dispostivos
 - [x] Como usuario quero um resumo dos status de CPU, RAM e temperatura dos dispostivos
-- [ ] Como usuario quero ser capaz de filtrar meus dispostivos
-- [ ] Como usuário quero ver gráficos do histórico de dados de heartbeats
-- [ ] Como usuário quero ser capaz de filtrar período de histórico
-- [ ] Como usuário quero ser capaz de criar notificações baseado nos status de dispostivos
-- [ ] Como usuário quero ser capaz de visualizar minhas notificações criadas.
+- [x] Como usuario quero ser capaz de filtrar meus dispostivos
+- [x] Como usuário quero ver gráficos do histórico de dados de heartbeats
+- [x] Como usuário quero ser capaz de filtrar período de histórico
+- [x] Como usuário quero ser capaz de criar notificações baseado nos status de dispostivos
+- [x] Como usuário quero ser capaz de visualizar minhas notificações criadas.
 - [ ] Como usuário quero receber notificações em tempo real
 de acordo com minhas notificações configuradas
 - [x] Como usuário quero registrar novos dispostivos
