@@ -11,7 +11,7 @@ export default function StatusFeed({ status }: IStatusFeed) {
 
   return (
     <article
-      className="hidden lg:w-[30%] lg:flex flex-col gap-y-6 p-4 overflow-y-scroll h-max"
+      className="hidden lg:w-[30%] lg:flex flex-col gap-y-6 p-4 overflow-scroll h-full items-center"
     >
       <Suspense fallback={<StatusCardSkeleton />}>
         <Await resolve={status}>
