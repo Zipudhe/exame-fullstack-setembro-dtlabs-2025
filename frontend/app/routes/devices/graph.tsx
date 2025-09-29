@@ -1,30 +1,53 @@
 import type { Route } from './+types/graph'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 
 import { CheckBox, DateInput } from '../../components/Input'
 import { getDeviceStatus } from '../../lib/api'
 
-export async function clientLoader({ params: { deviceId } }: Route.LoaderArgs) {
-  const device_status = await getDeviceStatus(deviceId).then(res => res.data).catch(err => console.error({ err }))
+export async function clientLoader({ params: { deviceId }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url)
+  const start_date = url.searchParams.get("start_date")
+  const end_date = url.searchParams.get("end_date")
+
+  const device_status = await getDeviceStatus(deviceId, { start_date, end_date }).then(res => res.data).catch(err => console.error({ err }))
 
   return { device_status }
 }
 
-export default function DevicesHome({ loaderData: { device_status } }: Route.ComponentProps) {
-  const keys = ['cpu_usage', 'ram_usage', 'temperature', 'free_disk', 'latency']
-  const [filters, setFilter] = useState({
-    start_date: new Date(),
+type FilterState = {
+  start_date: Date | null,
+  end_date: Date | null
+}
+
+type Metrics = {
+  cpu_usage: string,
+  ram_usage: string,
+  temperature: string,
+  free_disk: string,
+  latency: string
+}
+
+type MetricKey = keyof Metrics
+
+export default function DevicesHome({ loaderData: { device_status }, params: { deviceId } }: Route.ComponentProps) {
+  const [filters, setFilter] = useState<FilterState>({
+    start_date: null,
     end_date: null
   })
-  const [visibleKeys, setVisibleKeys] = useState<string[]>(keys)
   const metricColors = {
     cpu_usage: '#3B82F6',
     ram_usage: '#8B5CF6',
     temperature: '#EF4444',
     free_disk: '#22C55E',
     latency: '#EAB308'
-  } as Record<typeof keys, string>
+  } as Metrics
+
+  const navigate = useNavigate()
+
+  const [visibleKeys, setVisibleKeys] = useState<MetricKey[]>(Object.keys(metricColors) as MetricKey[])
+  const keys = ['cpu_usage', 'ram_usage', 'temperature', 'free_disk', 'latency']
 
   const handleKeyClick = (e: React.MouseEvent<HTMLInputElement>) => {
     const { checked, name } = e.currentTarget
@@ -32,13 +55,13 @@ export default function DevicesHome({ loaderData: { device_status } }: Route.Com
     if (checked) {
       setVisibleKeys((prevState) => {
         const updatedState = [...prevState]
-        updatedState.push(name)
+        updatedState.push(name as MetricKey)
 
         return updatedState
       })
     } else {
       setVisibleKeys((prevState) => {
-        const index = prevState.indexOf(name)
+        const index = prevState.indexOf(name as MetricKey)
         const updatedState = [...prevState]
         updatedState.splice(index, 1)
 
@@ -47,10 +70,25 @@ export default function DevicesHome({ loaderData: { device_status } }: Route.Com
     }
   }
 
+  useEffect(() => {
+    const queryParams = new URLSearchParams()
+    if (filters.start_date) {
+      queryParams.append('start_date', filters.start_date.toISOString() ?? '')
+    }
+    if (filters.end_date) {
+      queryParams.append('end_date', filters.end_date.toISOString() ?? '')
+    }
+
+    navigate(`/devices/${deviceId}/graph?${queryParams.toString()}`)
+
+  }, [filters])
+
   const handleUpdateFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
 
     const { value, name } = e.currentTarget
     const updateDate = new Date(`${value}T10:00`)
+
+
     setFilter((prevFilter) => {
       const updatedFilter = { ...prevFilter, [name]: updateDate }
 
@@ -69,7 +107,7 @@ export default function DevicesHome({ loaderData: { device_status } }: Route.Com
                 <CheckBox
                   id={`filter_key-${index}`}
                   name={key}
-                  defaultChecked={visibleKeys.includes(key)}
+                  defaultChecked={visibleKeys.includes(key as MetricKey)}
                   onClick={handleKeyClick}
                 />
                 <span> {key} </span>
@@ -78,10 +116,10 @@ export default function DevicesHome({ loaderData: { device_status } }: Route.Com
           })
         }
       </div>
-      <div className='w-full flex flex-row justify-evenly'>
+      <div className='w-full flex flex-row justify-evenly items-center'>
         <DateInput
           label="Data de Inicio"
-          value={filters.start_date.toISOString().split("T")[0]}
+          value={filters.start_date?.toISOString().split("T")[0]}
           required
           name="start_date"
           onChange={handleUpdateFilter}
@@ -89,9 +127,16 @@ export default function DevicesHome({ loaderData: { device_status } }: Route.Com
         <DateInput
           name="end_date"
           onChange={handleUpdateFilter}
-          value={filters.end_date && filters.end_date.toISOString().split("T")[0]}
+          value={filters.end_date?.toISOString().split("T")[0]}
           label="Data de Fim"
         />
+        <button
+          className='border-white border rounded-2xl h-12 cursor-pointer w-fit px-3 text-center'
+          type="button"
+          onClick={() => setFilter({ start_date: null, end_date: null })}
+        >
+          Limpar Filtros
+        </button>
       </div>
       <ResponsiveContainer width={'100%'} height={'80%'} >
         <LineChart

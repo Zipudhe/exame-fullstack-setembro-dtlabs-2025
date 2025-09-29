@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form'
-import { useSubmit, useNavigate, redirect } from 'react-router'
+import { useSubmit, useNavigate } from 'react-router'
 
 import type { UpdateDevice } from "types/device"
 import { createDevice } from '../../lib/api'

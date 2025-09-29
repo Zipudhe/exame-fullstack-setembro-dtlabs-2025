@@ -36,8 +36,12 @@ export const getDevice = (device_id: string) => {
   return api.get<DetailedDevice>(`${deviceBaseUrl}/${device_id}`)
 }
 
-export const getDeviceStatus = (device_id: string) => {
-  return api.get(`${deviceBaseUrl}/${device_id}/status`)
+export const getDeviceStatus = (device_id: string, filter: { start_date: string | null, end_date: string | null }) => {
+  return api.get(`${deviceBaseUrl}/${device_id}/status`, {
+    params: {
+      ...filter
+    }
+  })
 }
 
 export const updateDevice = (device_id: string, payload: UpdateDevice) => {
