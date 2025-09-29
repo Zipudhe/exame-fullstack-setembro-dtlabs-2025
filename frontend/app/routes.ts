@@ -14,8 +14,8 @@ export default [
 
     ...prefix("notifications", [
       index("routes/notifications/home.tsx"),
-      route(":deviceId", "routes/notifications/details.tsx"),
-      route("register", "routes/notifications/register.tsx"),
+      route(":notificationId", "routes/notifications/details.tsx"),
+      route("/register", "routes/notifications/register.tsx"),
     ]),
   ]),
 
