@@ -27,6 +27,25 @@ export const NumberInput = () => {
 
 }
 
-export const CheckBox = () => {
+export const CheckBox = (props: InputProps) => (
+  <input
+    className="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+    {...props}
+    type="checkbox"
+  />
+)
 
+export const DateInput = (props: InputProps) => {
+  return (
+    <div className="mb-4">
+      <label htmlFor={props.id} className="block text-white-700 text-sm font-bold mb-2">
+        {props.label}
+      </label>
+      <input
+        type="date"
+        {...props}
+        className="shadow appearance-none border rounded w-full py-2 px-3 text-white-700 leading-tight focus:outline-none focus:shadow-outline"
+      />
+    </div>
+  )
 }
