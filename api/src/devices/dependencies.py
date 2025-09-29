@@ -17,7 +17,8 @@ def get_devices_query_params(
     sn: str = "",
     skip: int = 0,
     limit: int = 100,
-    created_at: str = "",
+    start_date: str = "",
+    end_date: str = "",
 ):
     q = dict()
     if location:
@@ -29,10 +30,20 @@ def get_devices_query_params(
     if sn:
         q.update({"sn": sn})
 
-    if created_at:
-        q.update({"creatd_at": datetime.fromisoformat(created_at).date().isoformat()})
+    if start_date:
+        q.update({"start_date": datetime.fromisoformat(start_date).date().isoformat()})
 
-    return {"q": q, "skip": skip, "limit": limit}
+    if end_date:
+        q.update({"end_date": datetime.fromisoformat(end_date).date().isoformat()})
+
+    print(f"query: {q}")
+    return {
+        "q": q,
+        "skip": skip,
+        "limit": limit,
+        "start_date": start_date,
+        "end_date": end_date,
+    }
 
 
 DevicesCollectionDep = Annotated[Collection, Depends(get_devices_collection)]
