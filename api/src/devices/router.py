@@ -209,9 +209,9 @@ async def get_device_status(
         raise HTTPException(500, "Failed to get device status") from e
 
 
-@router.post("/{device_sn}/status", status_code=status.HTTP_201_CREATED)
+@router.post("/{device_id}/status", status_code=status.HTTP_201_CREATED)
 async def create_device_status(
-    device_sn: str,
+    device_id: str,
     request: Request,
     device_status: DeviceStatusInput,
     devices_collection: DevicesCollectionDep,
@@ -223,7 +223,7 @@ async def create_device_status(
 
     try:
         devices_collection.update_one(
-            {"sn": device_sn, "user_id": user_id},
+            {"id": device_id, "user_id": user_id},
             {"$push": {"status": {"$each": [new_status], "$position": 0}}},
         )
 

@@ -1,7 +1,6 @@
 import random
 import sys
 
-
 from src.devices.schemas import Device, DeviceStatusInput
 from src.notifications.schemas import NotificationConfig, ThreshHoldConfig
 from src.users.utils import Hasher
@@ -10,11 +9,12 @@ from src.notifications.dependencies import get_notifications_config_collection
 from src.users.dependencies import get_user_collection
 from src.devices.dependencies import get_devices_collection
 from src.database import get_database
+from .device_helper import create_device
 
 from faker import Faker
 
-QTD_DEVICES = 5
-QTD_NOTIFICATION_CONFIG = 5
+QTD_DEVICES = 1
+QTD_NOTIFICATION_CONFIG = 2
 
 faker = Faker()
 db = get_database()
@@ -69,6 +69,12 @@ if __name__ == "__main__":
         ).model_dump()
         device["user_id"] = user_id
         print("created device:", device["id"])
+        create_device(
+            endpoint=f"/api/devices/{device['id']}/status",
+            device_id=device["id"],
+            user_id=user_id,
+            interval=10,
+        )
 
         status = []
         for _ in range(random.randint(1, 5)):
@@ -112,9 +118,9 @@ if __name__ == "__main__":
         )
 
         notification_config = NotificationConfig(
+            user_id=user_id,
             threshHold=threshHold,
         ).model_dump()
-        notification_config["user_id"] = user_id
         notification_list.append(notification_config)
 
     if len(devices) != len(set(id(d) for d in devices)):

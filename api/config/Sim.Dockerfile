@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY telemetry_simulator.py .
+COPY telemetry_sim.py .
 
 # Run the simulator
-CMD ["python", "-u", "telemetry_simulator.py"]
+CMD ["python", "-u", "telemetry_sim.py"]

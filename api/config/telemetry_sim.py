@@ -63,7 +63,6 @@ def get_dns_latency():
         )
 
         if result.returncode == 0:
-            # Simulate realistic latency (5-100ms)
             return round(random.uniform(5, 100), 2)
         else:
             return None
@@ -118,6 +117,7 @@ def collect_telemetry():
 def send_telemetry(data):
     """Send telemetry data to API"""
     try:
+        print(f"Sending data to: {API_URL}")
         response = requests.post(
             API_URL, json=data, timeout=5, headers={"Content-Type": "application/json"}
         )
