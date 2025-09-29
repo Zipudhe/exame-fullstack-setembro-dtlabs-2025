@@ -48,9 +48,9 @@ app.add_middleware(
 app.add_middleware(AuthMiddleware)
 app.add_middleware(UserIdAppend)
 
-app.include_router(usersRouter, prefix="/api", tags=["Users"])
-app.include_router(devicesRouter, prefix="/api", tags=["Devices"])
-app.include_router(notificationsRouter, prefix="/api", tags=["Notifications"])
+app.include_router(usersRouter, prefix="/api")
+app.include_router(devicesRouter, prefix="/api")
+app.include_router(notificationsRouter, prefix="/api")
 
 
 @app.get("/")
