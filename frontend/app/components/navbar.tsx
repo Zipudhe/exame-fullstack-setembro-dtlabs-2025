@@ -17,7 +17,6 @@ import { logOut } from '../lib/api'
 
 const links = [
   { href: "/", name: "Tela Inicial" },
-  { href: "/devices", name: "Dispositivos" },
   { href: "/notifications", name: "Notificações" },
 ]
 
