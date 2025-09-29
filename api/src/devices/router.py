@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -120,9 +121,58 @@ async def get_device_status(
 ):
     user_id = request.state.user_id
 
+    filter_conditions = []
+
+    if commons["start_date"]:
+        start_date = datetime.fromisoformat(commons["start_date"]).replace(
+            tzinfo=timezone.utc
+        )
+        filter_conditions.append(
+            {
+                "$gte": [
+                    {"$toDate": "$$item.created_at"},  # Convert to Date for comparison
+                    start_date,
+                ]
+            }
+        )
+
+    if commons["end_date"]:
+        end_date = datetime.fromisoformat(commons["end_date"]).replace(
+            tzinfo=timezone.utc
+        )
+        filter_conditions.append(
+            {
+                "$lte": [
+                    {"$toDate": "$$item.created_at"},  # Convert to Date for comparison
+                    end_date,
+                ]
+            }
+        )
+
+    if filter_conditions:
+        filter_cond = (
+            {"$and": filter_conditions}
+            if len(filter_conditions) > 1
+            else filter_conditions[0]
+        )
+    else:
+        filter_cond = True
+
+    print(f"{filter_cond}")
     pipeline = [
         {
             "$match": {"id": device_id, "user_id": user_id},
+        },
+        {
+            "$addFields": {
+                "filtered_status": {
+                    "$filter": {
+                        "input": "$status",
+                        "as": "item",
+                        "cond": filter_cond,
+                    }
+                }
+            }
         },
         {
             "$project": {
@@ -131,7 +181,7 @@ async def get_device_status(
                     "$slice": [
                         {
                             "$sortArray": {
-                                "input": "$status",
+                                "input": "$filtered_status",
                                 "sortBy": {"created_at": -1},
                             }
                         },

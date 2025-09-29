@@ -9,7 +9,7 @@ from src.schemas import RedisDep
 from .schemas import UserOutPut, GetUser, UserInputForm, UserLoginForm
 from .utils import Hasher
 
-router = APIRouter(prefix="/users", tags=["devices"])
+router = APIRouter(prefix="/users", tags=["users"])
 logger = logging.getLogger(__name__)
 enviroment = get_enviroment()
 

@@ -13,7 +13,7 @@ from .schemas import (
 from .dependencies import NotificationsCollectionDep, NotificationsConfigCollectionDep
 from ..devices.dependencies import DevicesCollectionDep
 
-router = APIRouter(prefix="/notifications", tags=["devices"])
+router = APIRouter(prefix="/notifications", tags=["notifications"])
 logger = logging.getLogger(__name__)
 
 
