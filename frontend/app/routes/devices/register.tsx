@@ -7,14 +7,11 @@ import type { Route } from './+types/register'
 
 import Loading from '~/components/loading'
 import Form from '~/components/deviceForm'
+import { useNotification } from '../../context/notificationContext'
 
 export async function clientAction({ request }: Route.ActionArgs) {
   const content = await request.formData()
-  return await createDevice(content)
-    .then(() => redirect("/"))
-    .catch(err => {
-      console.error({ err })
-    })
+  return createDevice(content)
 }
 
 export function HydrateFallback() {
@@ -24,6 +21,7 @@ export function HydrateFallback() {
 export default function DeviceRegister() {
   const navigate = useNavigate()
   const submit = useSubmit()
+  const { dispatch } = useNotification()
 
   const defaultValues = {
     name: '',
@@ -37,6 +35,15 @@ export default function DeviceRegister() {
 
   const handleCreate = async (data: UpdateDevice) => {
     await submit(data, { method: "post" })
+      .then(() => {
+        console.log("successfully created new device")
+        dispatch({ notificationType: "SUCCESS", message: "Novo Dispostivio adicionado" })
+        navigate("/")
+      })
+      .catch(err => {
+        console.log({ dispatch })
+        dispatch({ notificationType: "ERROR", message: "Falha ao criar novo dispositivo" })
+      })
   }
 
   return (

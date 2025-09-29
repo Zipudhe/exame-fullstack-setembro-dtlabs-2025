@@ -29,14 +29,17 @@ export function HydrateFallback() {
 export default function Home({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate()
   return (
-    <div className="relative w-full max-w-3/4 grid grid-cols-2 md:grid-cols-4 3xl:grid-cols-6 place-items-center gap-x-2 gap-y-4 overflow-scroll" >
-      {
-        loaderData && loaderData.map(device => <DeviceCard key={device.id} device={device} navigate={navigate} />)
-      }
-      <div
-        onClick={() => navigate("/devices/register")}
-        className="absolute bg-orange-400 cursor-pointer grid place-items-center rounded-full w-20 h-20 bottom-10 right-20 ">
-        <PlusIcon className="size-12" />
+    <div className="flex flex-1 flex-col justify-evenly items-center" >
+      <h1 className="text-3xl" > Dispositivos </h1>
+      <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 auto-cols-min place-items-center gap-x-4" >
+        {
+          loaderData && loaderData.map(device => <DeviceCard key={device.id} device={device} navigate={navigate} />)
+        }
+        <div
+          onClick={() => navigate("/devices/register")}
+          className="absolute bg-orange-400 cursor-pointer grid place-items-center rounded-full w-20 h-20 bottom-20 right-20 ">
+          <PlusIcon className="size-12" />
+        </div>
       </div>
     </div>
   );

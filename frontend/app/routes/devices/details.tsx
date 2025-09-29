@@ -8,6 +8,7 @@ import { deleteDevice, getDevice, updateDevice } from '../../lib/api'
 import type { Route } from './+types/details'
 import Loading from '~/components/loading'
 import Form from '~/components/deviceForm'
+import { useNotification } from '../../context/notificationContext'
 
 export async function clientLoader({ params }: Route.LoaderArgs): Promise<DetailedDevice | void> {
   return getDevice(params.deviceId)
@@ -32,6 +33,7 @@ export function HydrateFallback() {
 
 export default function DeviceDetailsPage({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate()
+  const { dispatch } = useNotification()
   const submit = useSubmit()
 
   if (!loaderData) {
@@ -70,22 +72,24 @@ export default function DeviceDetailsPage({ loaderData }: Route.ComponentProps) 
     toggleEdit()
     await deleteDevice(deviceSummary.id)
       .then(() => {
+        dispatch({ message: "Dispositivo removido com sucesso", notificationType: "SUCCESS" })
         navigate("/")
       })
       .catch(err => {
-        console.error({ err })
+        dispatch({ message: "Falha ao remover dispositivo", notificationType: "SUCCESS" })
         toggleEdit()
       })
   }
   const toggleEdit = () => {
-    reset(deviceSummary)
+    isEditing && reset(deviceSummary)
     setIsEditing((prevState) => !prevState)
   }
 
   const disabled = isSubmitting || !isEditing
 
   return (
-    <div className="relative w-full justify-center items-center flex">
+    <div className="flex-1 flex-col justify-evenly relative w-full items-center flex">
+      <h1 className="text-3xl" > Detalhes do Dispositivo </h1>
       <button
         onClick={toggleEdit}
         className="absolute top-0 right-4 p-2 rounded-full text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
