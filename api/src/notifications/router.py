@@ -4,7 +4,12 @@ from bson import ObjectId
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from .schemas import NotificationConfig, NotificationConfigOut, NotificationConfigUpdate
+from .schemas import (
+    ThreshHoldConfig,
+    NotificationConfig,
+    NotificationConfigOut,
+    NotificationConfigUpdate,
+)
 from .dependencies import NotificationsCollectionDep, NotificationsConfigCollectionDep
 from ..devices.dependencies import DevicesCollectionDep
 
@@ -19,7 +24,8 @@ async def get_notifications_config(
     user_id = request.state.user_id
 
     try:
-        return collection.find({"user_id": user_id})
+        notifications = collection.find({"user_id": user_id})
+        return notifications
     except Exception as e:
         logger.error(f"Error fetching notification configs: {e}")
         raise HTTPException(500, detail="Failed to fetch notification configs") from e
@@ -43,15 +49,18 @@ async def get_notification_config(
 
 @router.post("/config", status_code=status.HTTP_201_CREATED)
 async def create_notifications_config(  # Subscribe to a notificaiton stream for device
-    notificationConfig: NotificationConfig,
+    threshHoldConfig: ThreshHoldConfig,
     request: Request,
     collection: NotificationsConfigCollectionDep,
 ):
     user_id = request.state.user_id
-    new_config = {**notificationConfig.model_dump(), "user_id": user_id}
+    notificationConfig = NotificationConfig(
+        threshHold=threshHoldConfig, user_id=user_id
+    ).model_dump()
+    print(f"Notification: {notificationConfig}")
 
     try:
-        collection.insert_one(new_config)
+        collection.insert_one(notificationConfig)
     except Exception as e:
         raise HTTPException(500, detail="Failed to create notification config") from e
 
@@ -66,6 +75,8 @@ async def update_notifications_config(
     notificationConfig: NotificationConfigUpdate,
 ):
     user_id = request.state.user_id
+    update_data = notificationConfig.model_dump(exclude_unset=True)
+    print(f"updated: {update_data}")
 
     try:
         collection.update_one(

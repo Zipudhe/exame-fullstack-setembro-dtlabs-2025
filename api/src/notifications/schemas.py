@@ -50,8 +50,8 @@ class Notification(BaseModel):
 
 
 class NotificationConfig(BaseModel):
+    user_id: str
     threshHold: ThreshHoldConfig
-    notifications: list[Notification] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 
@@ -72,6 +72,5 @@ class NotificationConfigOut(BaseModel):
 
 
 class NotificationConfigUpdate(BaseModel):
-    device_id: Optional[str] = None
     threshHold: Optional[ThreshHoldConfig] = None
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
