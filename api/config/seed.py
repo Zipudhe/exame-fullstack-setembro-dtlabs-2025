@@ -6,6 +6,9 @@ from src.devices.schemas import Device, DeviceStatusInput
 from src.notifications.schemas import NotificationConfig, ThreshHoldConfig
 from src.users.utils import Hasher
 from src.users.schemas import UserIn
+from src.notifications.dependencies import get_notifications_config_collection
+from src.users.dependencies import get_user_collection
+from src.devices.dependencies import get_devices_collection
 from src.database import get_database
 
 from faker import Faker
@@ -16,9 +19,9 @@ QTD_NOTIFICATION_CONFIG = 5
 faker = Faker()
 db = get_database()
 
-notification_collection = db.get_collection("notifications")
-users_collection = db.get_collection("users")
-devices_collection = db.get_collection("devices")
+notification_collection = get_notifications_config_collection(db)
+users_collection = get_user_collection(db)
+devices_collection = get_devices_collection(db)
 
 
 def drop_collections():
@@ -111,6 +114,7 @@ if __name__ == "__main__":
         notification_config = NotificationConfig(
             threshHold=threshHold,
         ).model_dump()
+        notification_config["user_id"] = user_id
         notification_list.append(notification_config)
 
     if len(devices) != len(set(id(d) for d in devices)):
