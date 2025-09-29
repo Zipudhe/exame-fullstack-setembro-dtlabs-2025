@@ -88,7 +88,7 @@ export default function DeviceDetailsPage({ loaderData }: Route.ComponentProps) 
   const disabled = isSubmitting || !isEditing
 
   return (
-    <div className="flex-1 flex-col justify-evenly relative w-full items-center flex">
+    <div className="flex-1 flex-col max-h-7xl justify-evenly relative w-full items-center flex">
       <h1 className="text-3xl" > Detalhes do Dispositivo </h1>
       <button
         onClick={toggleEdit}
