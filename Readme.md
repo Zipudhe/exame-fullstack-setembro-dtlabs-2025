@@ -56,6 +56,135 @@
         docker exec <container-name> python3 -m config.seed
       ```
 
+### Frontend - Setup Instructions
+
+#### Instalação
+
+#### 1. Clone o repositório
+
+```bash
+git clone https://github.com/Zipudhe/exame-fullstack-setembro-dtlabs-2025.git
+cd exame-fullstack-setembro-dtlabs-2025/frontend
+```
+
+#### 2. Instale as dependências
+
+```bash
+npm install
+```
+
+Or using yarn:
+
+```bash
+yarn install
+```
+
+### 3. Environment Configuration
+
+Crie as variaveis de ambiente `.env` no diretório do frontend:
+
+```bash
+cp .env.example .env
+```
+
+Ou crie um do zero :
+
+```env
+REACT_APP_API_URL=http://localhost:8000
+REACT_APP_WS_URL=ws://localhost:8000/ws
+```
+
+## Running the Application
+
+### Development Mode
+
+Servidor de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+Or with yarn:
+
+```bash
+yarn dev
+```
+
+A Aplicação vai rodar por padrão em: `http://localhost:3000`.
+
+### Production Build
+
+To create an optimized production build:
+
+```bash
+npm run build
+```
+
+Or with yarn:
+
+```bash
+yarn build
+```
+
+This creates a `build` folder with optimized production files.
+
+## Estrutura do projeto
+
+```
+frontend/
+├── public/          # Static files
+├── src/
+│   ├── components/  # React components
+│   ├── pages/       # Page components
+│   ├── services/    # API services
+│   ├── utils/       # Utility functions
+│   ├── App.js       # Main App component
+│   └── index.js     # Entry point
+├── .env             # Environment variables
+├── package.json     # Dependencies and scripts
+└── README.md        # This file
+```
+
+## Scripts disponíveis
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | Runs the app in development mode |
+| `npm test` | Launches the test runner |
+| `npm run build` | Builds the app for production |
+| `npm run eject` | Ejects from Create React App (irreversible) |
+
+## Troubleshooting
+
+### Dependencies Issues
+
+Em caso de conflitos:
+
+```bash
+npm cache clean --force
+
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## Backend Connection
+
+Essa aplicação frontend requer conexão com API, certifique que:
+
+1. O backend server está rodando (Por padrão na URL `http://localhost:8000`)
+2. As variáveis de ambiente estão configuradas `.env` apontam para backend URL
+3. CORS está configurado corretametne
+
+[backend README](../backend/README.md) pra backend setup.
+
+## Tecnologias Utilizadas
+
+- React
+- React Router
+- Axios
+- WebSocket
+- CSS Modules / Styled Components / Tailwind
+
 ## Tarefas
 
 - [x] Criar repositório (Monolito)
