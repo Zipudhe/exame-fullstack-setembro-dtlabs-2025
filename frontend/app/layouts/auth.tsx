@@ -1,6 +1,8 @@
 import { Outlet, redirect } from "react-router";
 import type { Route } from "../+types/root";
 import Navbar from "../components/navbar";
+import NotificationCard from "../components/notificationCard";
+import { NotificationProvider } from '../context/notificationContext'
 
 export async function loader() {
   return null
@@ -24,14 +26,14 @@ function authMiddleware({ request, context }: { request: Request, context: any }
 export const middleware: Route.MiddlewareFunction[] = [authMiddleware]
 
 function AuthenticatedLayout() {
-
   return (
-    <>
+    <NotificationProvider>
+      <NotificationCard />
       <Navbar />
-      <main className="p-6 flex flex-1 justify-center max-h[calc(100vh-80px)] overflow-hidden">
+      <main className="p-6 flex flex-1 flex-col justify-center items-center max-h[calc(100vh-80px)] overflow-hidden">
         <Outlet />
       </main>
-    </>
+    </NotificationProvider>
   )
 }
 
