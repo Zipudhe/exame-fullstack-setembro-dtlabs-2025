@@ -33,7 +33,7 @@ def get_ram_usage():
     # Simulate realistic RAM patterns (usually more stable)
     base = random.uniform(30, 70)
     variation = random.uniform(-10, 10)
-    return round(min(max(base + variation, 0), 100), 2)
+    return int(round(min(max(base + variation, 0), 100), 2))
 
 
 def get_disk_free():
@@ -107,7 +107,7 @@ def collect_telemetry():
         "temperature": get_temperature(),
         "dns_latency": latency,
         "connectivity": connectivity,
-        "boot_time": BOOT_TIME,
+        "boot_date": BOOT_TIME,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 

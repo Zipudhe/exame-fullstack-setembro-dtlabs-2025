@@ -29,11 +29,35 @@ def create_device(endpoint: str, device_id: str, user_id: str, interval: int = 6
     docker_file_path = f"{api_root_path}/Sim.Dockerfile"
     image_tag = "device_" + device_id
 
-    network = get_network("api_default")
+    networks = client.networks.list(names=["default"])
+    api_network = None
+
+    # Find the network that has the 'api' container
+    for network in networks:
+        network.reload()  # Refresh network data
+        containers = network.attrs.get("Containers", {})
+        # Check if any container name contains 'api'
+        if any(
+            "api" in container_info.get("Name", "").lower()
+            for container_info in containers.values()
+        ):
+            api_network = network
+            print(f"Found API network: {api_network.name}")
+            break
+
+    if not api_network:
+        print("❌ Could not find API network. Available networks:")
+        for net in client.networks.list():
+            print(f"  - {net.name}")
+
+    print("Using host network")
+    api_network = "host"
+    host = "api" if isinstance(api_network, Network) else "localhost"
+
     custom_env = {
         "DEVICE_ID": device_id,
         "USER_ID": user_id,
-        "API_URL": f"http://{network.name}:8000{endpoint}",
+        "API_URL": f"http://{host}:8000{endpoint}",
         "INTERVAL": interval,
     }
 
@@ -57,7 +81,7 @@ def create_device(endpoint: str, device_id: str, user_id: str, interval: int = 6
             environment=custom_env,
             remove=True,
             detach=True,
-            network=network.name,
+            network=api_network.id if isinstance(api_network, Network) else api_network,
         )
 
         print("\n✅ Container ran and exited successfully.")

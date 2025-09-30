@@ -84,7 +84,7 @@ if __name__ == "__main__":
                 free_disk=faker.random_int(min=0, max=100),
                 temperature=faker.random_int(min=20, max=90),
                 latency=faker.random_int(min=0, max=500),
-                conectivity=faker.boolean(chance_of_getting_true=90),
+                connectivity=faker.boolean(chance_of_getting_true=90),
                 boot_date=faker.date_this_decade().isoformat(),
             ).model_dump()
 
