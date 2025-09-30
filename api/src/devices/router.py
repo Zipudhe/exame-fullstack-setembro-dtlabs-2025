@@ -212,18 +212,16 @@ async def get_device_status(
 @router.post("/{device_id}/status", status_code=status.HTTP_201_CREATED)
 async def create_device_status(
     device_id: str,
-    request: Request,
     device_status: DeviceStatusInput,
     devices_collection: DevicesCollectionDep,
 ):
-    user_id = request.state.user_id
     new_status = device_status.model_dump()
 
-    await publish_to_stream(user_id, "new notification arrived")
+    # await publish_to_stream(user_id, "new notification arrived") should subscribe to device id
 
     try:
         devices_collection.update_one(
-            {"id": device_id, "user_id": user_id},
+            {"id": device_id},
             {"$push": {"status": {"$each": [new_status], "$position": 0}}},
         )
 

@@ -7,21 +7,21 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class HearBeat(BaseModel):
-    cpu_usage: Optional[int] = None
-    ram_usage: Optional[int] = None
-    free_disk: Optional[int] = None
+    cpu_usage: Optional[float] = None
+    ram_usage: Optional[float] = None
+    free_disk: Optional[float] = None
     temperature: Optional[float] = None
-    latency: Optional[int] = None
+    latency: Optional[float] = None
 
 
 class DeviceStatus(HearBeat):
-    conectivity: bool
+    connectivity: bool
     boot_date: str = Field()
     created_at: str
 
 
 class DeviceStatusInput(HearBeat):
-    conectivity: bool
+    connectivity: bool
     boot_date: str = Field()
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 

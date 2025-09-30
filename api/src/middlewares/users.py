@@ -1,4 +1,5 @@
 import logging
+import re
 from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -13,6 +14,15 @@ class UserIdAppend(BaseHTTPMiddleware):
         path = request.url.path
 
         if path == "/" or any(path.startswith(route) for route in public_routes):
+            return await call_next(request)
+
+        if (
+            re.fullmatch(
+                r"/api/devices/([a-z0-9]){32}/status",
+                path,
+            )
+            and request.method == "POST"
+        ):
             return await call_next(request)
 
         if request.method == "OPTIONS":
