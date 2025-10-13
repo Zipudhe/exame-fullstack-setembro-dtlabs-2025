@@ -18,15 +18,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        if (
-            re.fullmatch(
-                r"/api/devices/([a-z0-9]){32}/status",
-                path,
-            )
-            and request.method == "POST"
-        ):
-            return await call_next(request)
-
         session_id = request.cookies.get("session_id")
         if not session_id:
             raise HTTPException(status_code=401, detail="Unauthorized")

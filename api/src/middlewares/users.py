@@ -16,15 +16,6 @@ class UserIdAppend(BaseHTTPMiddleware):
         if path == "/" or any(path.startswith(route) for route in public_routes):
             return await call_next(request)
 
-        if (
-            re.fullmatch(
-                r"/api/devices/([a-z0-9]){32}/status",
-                path,
-            )
-            and request.method == "POST"
-        ):
-            return await call_next(request)
-
         if request.method == "OPTIONS":
             return await call_next(request)
 

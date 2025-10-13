@@ -6,6 +6,7 @@ from main import app
 from src.database import get_db_client, get_database
 from pymongo.database import Database
 from fastapi.testclient import TestClient
+from src.devices.schemas import HearBeat, DeviceUpdate
 
 
 client = TestClient(app)
@@ -37,7 +38,11 @@ def database_cleanup():
 
 @pytest.fixture()
 def user_cookies(user_credentials):
-    response = client.post("/api/users/login", data=user_credentials)
+    login_data = {
+        "email": user_credentials["email"],
+        "password": user_credentials["password"],
+    }
+    response = client.post("/api/users/login", data=login_data)
 
     session_id = response.cookies.get("session_id")
     if session_id:
@@ -51,6 +56,7 @@ def user_cookies(user_credentials):
 @pytest.fixture()
 def user_credentials():
     user_credentials = {
+        "email": "fakemail@mail.com",
         "username": "testuser",
         "password": "VerySecurepassword123",
     }
@@ -58,18 +64,6 @@ def user_credentials():
     response = client.post("/api/users", data=user_credentials)
     assert response.status_code == 201
     yield user_credentials
-
-
-@pytest.fixture()
-def created_user_id():
-    user_credentials = {
-        "username": "testuser",
-        "password": "VerySecurepassword123",
-    }
-
-    response = client.post("/api/users", data=user_credentials)
-    assert response.status_code == 201
-    yield response.json()["id"]
 
 
 @pytest.fixture()
@@ -135,32 +129,29 @@ def create_multiple_devices(user_cookies):
 
 @pytest.fixture()
 def create_multiple_status(created_device):
-    device_sn = created_device["sn"]
-    mocked_status_1 = {
-        "device_sn": device_sn,
-        "conectivity": True,
-        "boot_date": "2023-10-01",
-        "cpu_usage": 45,
-        "ram_usage": 60,
-        "free_disk": 120,
-        "tempeture": 40,
-        "latency": 20,
-    }
+    mocked_status_1 = HearBeat(
+        connectivity=True,
+        cpu_usage=45,
+        ram_usage=60,
+        free_disk=120,
+        temperature=40,
+        latency=20,
+    )
 
-    mocked_status_2 = {
-        "device_sn": device_sn,
-        "conectivity": True,
-        "boot_date": "2023-10-01",
-        "cpu_usage": 45,
-        "ram_usage": 60,
-        "free_disk": 120,
-        "tempeture": 36.5,
-        "latency": 20,
-    }
+    mocked_status_2 = HearBeat(
+        connectivity=True,
+        cpu_usage=45,
+        ram_usage=60,
+        free_disk=120,
+        temperature=36.5,
+        latency=20,
+    )
 
     status = [mocked_status_1, mocked_status_2]
     for stat in status:
-        response = client.post(f"/api/devices/{device_sn}/status", json=stat)
+        response = client.post(
+            f"/api/devices/{created_device['id']}/status", json=stat.model_dump()
+        )
         assert response.status_code == 201
 
     yield created_device
@@ -171,7 +162,7 @@ def test_list_devices(created_device, user_cookies):
 
     assert response.status_code == 200
 
-    data = response.json()
+    data = response.json()["data"]
 
     assert len(data) == 1
 
@@ -185,7 +176,7 @@ def test_multiple_devices(create_multiple_devices, user_cookies):
 
     assert response.status_code == 200
 
-    data = response.json()
+    data = response.json()["data"]
 
     assert len(data) == 3
 
@@ -200,7 +191,7 @@ def test_query_devices(create_multiple_devices, user_cookies):
 
     assert response.status_code == 200
 
-    data = response.json()
+    data = response.json()["data"]
 
     assert len(data) == 1
     device = data[0]
@@ -236,10 +227,12 @@ def test_update_device(created_device, user_cookies):
     expected_location = "Warehouse 3"
     device_id = created_device["id"]
 
-    update_device = {"location": expected_location}
+    update_device = DeviceUpdate(location=expected_location)
 
     response = client.put(
-        f"/api/devices/{device_id}", cookies=user_cookies, data=update_device
+        f"/api/devices/{device_id}",
+        cookies=user_cookies,
+        json=update_device.model_dump(),
     )
 
     assert response.status_code == 200
@@ -268,48 +261,34 @@ def test_create_device_unauthenticated():
 
 
 def test_create_device_status(user_cookies, created_device):
-    device_sn = created_device["sn"]
-
-    mocked_status = {
-        "device_sn": device_sn,
-        "conectivity": True,
-        "boot_date": "2023-10-01",
-        "cpu_usage": 45,
-        "ram_usage": 60,
-        "free_disk": 120,
-        "tempeture": 36.5,
-        "latency": 20,
-    }
-
-    response = client.post(f"/api/devices/{device_sn}/status", json=mocked_status)
+    device_id = created_device["id"]
+    mocked_status = HearBeat(
+        connectivity=True,
+        cpu_usage=45,
+        ram_usage=60,
+        free_disk=120,
+        temperature=36.5,
+        latency=20,
+    )
+    response = client.post(
+        f"/api/devices/{device_id}/status", json=mocked_status.model_dump()
+    )
 
     assert response.status_code == 201
 
-    status_response = client.get(f"/api/devices/{device_sn}/status")
+    status_response = client.get(f"/api/devices/{device_id}/status")
     assert status_response.status_code == 200
 
     status_data = status_response.json()
 
     assert len(status_data) == 1
 
-    assert status_data[0]["boot_date"] == "2023-10-01"
+    assert status_data[0].get("cpu_usage") == mocked_status.cpu_usage
 
 
 def test_list_device_status(create_multiple_status):
-    device_sn = create_multiple_status["sn"]
-    response = client.get(f"/api/devices/{device_sn}/status")
-
-    assert response.status_code == 200
-
-    statuses = response.json()
-
-    assert len(statuses) == 2
-
-
-def test_get_device_status(create_multiple_status):
-    device_sn = create_multiple_status["sn"]
-
-    response = client.get(f"/api/devices/{device_sn}/status")
+    device_id = create_multiple_status["id"]
+    response = client.get(f"/api/devices/{device_id}/status")
 
     assert response.status_code == 200
 
@@ -319,9 +298,9 @@ def test_get_device_status(create_multiple_status):
 
 
 def test_get_filtered_device_status(create_multiple_status):
-    device_sn = create_multiple_status["sn"]
+    device_id = create_multiple_status["id"]
 
-    response = client.get(f"/api/devices/{device_sn}/status", params={"skip": 1})
+    response = client.get(f"/api/devices/{device_id}/status", params={"skip": 1})
 
     assert response.status_code == 200
 

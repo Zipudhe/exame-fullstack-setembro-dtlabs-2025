@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Depends
 from pymongo.collection import Collection
-from src.schemas import DatabaseDep
+from src.dependencies import DatabaseDep
 
 
 def get_user_collection(db: DatabaseDep) -> Collection:

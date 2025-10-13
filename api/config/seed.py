@@ -1,7 +1,7 @@
 import random
 import sys
 
-from src.devices.schemas import Device, DeviceStatusInput
+from src.devices.schemas import Device
 from src.notifications.schemas import NotificationConfig, ThreshHoldConfig
 from src.users.utils import Hasher
 from src.users.schemas import UserIn
@@ -9,7 +9,7 @@ from src.notifications.dependencies import get_notifications_config_collection
 from src.users.dependencies import get_user_collection
 from src.devices.dependencies import get_devices_collection
 from src.database import get_database
-from .device_helper import create_device
+from src.devices.telemetry.telemetry_queue import add_device
 
 from faker import Faker
 
@@ -69,29 +69,9 @@ if __name__ == "__main__":
         ).model_dump()
         device["user_id"] = user_id
         print("created device:", device["id"])
-        create_device(
-            endpoint=f"/api/devices/{device['id']}/status",
-            device_id=device["id"],
-            user_id=user_id,
-            interval=10,
-        )
 
-        status = []
-        for _ in range(random.randint(1, 5)):
-            device_status = DeviceStatusInput(
-                cpu_usage=faker.random_int(min=0, max=100),
-                ram_usage=faker.random_int(min=0, max=100),
-                free_disk=faker.random_int(min=0, max=100),
-                temperature=faker.random_int(min=20, max=90),
-                latency=faker.random_int(min=0, max=500),
-                connectivity=faker.boolean(chance_of_getting_true=90),
-                boot_date=faker.date_this_decade().isoformat(),
-            ).model_dump()
-
-            status.append(device_status)
-
-        device["status"] = status
         devices.append(device)
+        add_device((device["id"], user_id))
 
     print("-------------------------")
 
@@ -104,8 +84,9 @@ if __name__ == "__main__":
             free_disk=faker.random_int(min=0, max=50),
             temperature=faker.random_int(min=60, max=90),
             latency=faker.random_int(min=200, max=500),
+            connectivity=faker.boolean(chance_of_getting_true=90),
             watch_keys=faker.words(
-                nb=random.randint(1, 5),
+                nb=random.randint(1, 4),
                 unique=True,
                 ext_word_list=[
                     "cpu_usage",

@@ -3,35 +3,16 @@ from typing import Annotated, Optional
 from uuid import uuid4
 
 from fastapi import Form
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class HearBeat(BaseModel):
-    cpu_usage: Optional[float] = None
-    ram_usage: Optional[float] = None
-    free_disk: Optional[float] = None
-    temperature: Optional[float] = None
-    latency: Optional[float] = None
-
-
-class DeviceStatus(HearBeat):
+    cpu_usage: float
+    ram_usage: float
+    free_disk: float
+    temperature: float
     connectivity: bool
-    boot_date: str = Field()
-    created_at: str
-
-
-class DeviceStatusInput(HearBeat):
-    connectivity: bool
-    boot_date: str = Field()
-    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-
-    @field_validator("boot_date")
-    def validate_boot_date(cls, value):
-        try:
-            date = datetime.fromisoformat(value).date().isoformat()
-            return date
-        except ValueError as e:
-            raise ValueError("boot_date must be in ISO format (YYYY-MM-DD)") from e
+    latency: float
 
 
 class Device(BaseModel):
@@ -40,7 +21,8 @@ class Device(BaseModel):
     location: str
     sn: str = Field(pattern="^\\d{12}$", min_length=12, max_length=12)
     description: str
-    status: list[DeviceStatus] = []
+    status: list[HearBeat] = []
+    boot_date: str = Field(default_factory=lambda: datetime.now().isoformat())
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
@@ -51,9 +33,13 @@ class DeviceSummary(BaseModel):
     location: str
     sn: str
     description: str
-    status: Optional[DeviceStatus] = None
+    status: Optional[HearBeat] = None
     created_at: str
     updated_at: str
+
+
+class SummaryList(BaseModel):
+    data: Optional[list[DeviceSummary]] = []
 
 
 class DeviceDetails(BaseModel):
@@ -62,7 +48,7 @@ class DeviceDetails(BaseModel):
     location: str
     sn: str
     description: str
-    status: list[DeviceStatus] = []
+    status: Optional[list[HearBeat]] = []
     created_at: str
     updated_at: str
 
@@ -75,6 +61,7 @@ class DeviceUpdate(BaseModel):
     name: Optional[str] = None
     location: Optional[str] = None
     description: Optional[str] = None
+    rebooted: Optional[bool] = None
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 

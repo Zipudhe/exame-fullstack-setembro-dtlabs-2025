@@ -4,7 +4,7 @@ from fastapi import APIRouter, Response, status, HTTPException, Request
 
 from .dependencies import UserCollectionDep
 from config.env_vars import get_enviroment
-from src.schemas import RedisDep
+from src.dependencies import RedisDep
 
 from .schemas import UserOutPut, GetUser, UserInputForm, UserLoginForm
 from .utils import Hasher
@@ -60,7 +60,6 @@ def create_session(
     logger.debug(f"Attempting login for user: {user_data.email}")
     try:
         user = users_collection.find_one({"email": user_data.email})
-        print(f"user: {user}")
 
         if not user:
             logger.debug("user not found")

@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from typing import Annotated
 from fastapi import Depends
 from pymongo.collection import Collection
-from src.schemas import DatabaseDep
+from src.dependencies import DatabaseDep
 
 
 def get_devices_collection(db: DatabaseDep) -> Collection:
@@ -31,18 +31,37 @@ def get_devices_query_params(
         q.update({"sn": sn})
 
     if start_date:
-        q.update({"start_date": datetime.fromisoformat(start_date).date().isoformat()})
+        q.update(
+            {
+                "start_date": {
+                    "$gte": [
+                        {
+                            "$toDate": "$$item.created_at"
+                        },  # Convert to Date for comparison
+                        datetime.fromisoformat(start_date).replace(tzinfo=timezone.utc),
+                    ]
+                }
+            }
+        )
 
     if end_date:
-        q.update({"end_date": datetime.fromisoformat(end_date).date().isoformat()})
+        q.update(
+            {
+                "end_date": {
+                    "$lte": [
+                        {
+                            "$toDate": "$$item.created_at"
+                        },  # Convert to Date for comparison
+                        datetime.fromisoformat(end_date).replace(tzinfo=timezone.utc),
+                    ]
+                }
+            }
+        )
 
-    print(f"query: {q}")
     return {
         "q": q,
         "skip": skip,
         "limit": limit,
-        "start_date": start_date,
-        "end_date": end_date,
     }
 
 
